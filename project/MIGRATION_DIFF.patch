@@ -1,0 +1,891 @@
+--- a/user_source/constraints_source/pin.adc
++++ b/user_source/constraints_source/pin.adc
+@@ -14,6 +14,12 @@
+ 
+ 
+ 
+-# Panel RES is T10 via the board level shifter; held released as in the vendor demo.
++# GT911 TP-RES is T10 via the board level shifter; driven by touch startup sequence.
+ set_pin_assignment { O_screen_reset_n } { LOCATION = T10; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
+ # DSI clock/data pads use PH1P dedicated DPHY1 placement; no ordinary LVCMOS lane constraints.
++
++# MLKPAI-F02 schematic page 8, FPGA side of TXS0108 3.3V/1.8V shifter.
++# INT is output-low during address selection, then input; board has pull-ups.
++set_pin_assignment { IO_touch_scl } { LOCATION = P11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
++set_pin_assignment { IO_touch_sda } { LOCATION = R12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = PULLUP; }
++set_pin_assignment { IO_touch_int } { LOCATION = U10; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+--- a/user_source/hdl_source/design_top_wrapper.v
++++ b/user_source/hdl_source/design_top_wrapper.v
+@@ -3,6 +3,7 @@
+ module design_top_wrapper #(
+     parameter DISPLAY_TEST_PATTERN = 0, // 0: camera; 1: vendor generated test pattern
+     parameter OSD_ENABLE = 1,
++    parameter EDGE_THRESHOLD = 14'd80,
+     parameter OSD_LOGO_X = 0,
+     parameter OSD_LOGO_Y = 0,
+     parameter OSD_TEXT_X = 375,
+@@ -21,6 +22,9 @@
+ 
+     output wire       O_screen_pwm,
+     output wire       O_screen_reset_n,
++    inout wire        IO_touch_scl,
++    inout wire        IO_touch_sda,
++    inout wire        IO_touch_int,
+ 
+     inout wire        IO_tx_clk_pad_n,
+     inout wire        IO_tx_clk_pad_p,
+@@ -239,7 +243,45 @@
+     // continuous backlight enable, and a 10 ms settling time at 10 MHz.
+     // No panel-specific reset pulse duration is supplied; do not invent one.
+     // FFC pin 33 is TP-RES on this screen assembly; it is NOT LCD RESX.
+-    assign O_screen_reset_n = 1'b1;
++    // One screen contact advances the request 0 -> 1 -> 2 -> 0.
++    wire S_touch_press, S_touch_held, S_touch_online;
++    wire [15:0] S_touch_errors;
++    reg [1:0] S_requested_mode;
++    wire [1:0] S_camera_mode, S_isp_frame_mode, S_ddr_frame_mode;
++    wire [7:0] S_slot_modes;
++    wire S_touch_reset_n;
++    display_reset_sync u_touch_reset (
++        .I_clk(I_sys_clk),.I_async_reset_n(I_rst_n),.O_reset_n(S_touch_reset_n));
++    gt911_touch u_touch (
++        .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
++        .IO_scl(IO_touch_scl),.IO_sda(IO_touch_sda),.IO_int(IO_touch_int),
++        .O_reset_n(O_screen_reset_n),.O_press(S_touch_press),.O_held(S_touch_held),
++        .O_online(S_touch_online),.O_error_count(S_touch_errors));
++    always @(posedge I_sys_clk or negedge S_touch_reset_n) begin
++        if(!S_touch_reset_n) S_requested_mode<=0;
++        else if(S_touch_press) S_requested_mode <= (S_requested_mode==2) ? 2'd0 : S_requested_mode+1'b1;
++    end
++    mode_mailbox u_mode_to_camera (
++        .I_src_clk(I_sys_clk),.I_dst_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
++        .I_mode(S_requested_mode),.O_mode(S_camera_mode));
++
++    // Read-slot metadata arrives during vertical blanking. Capture it at the
++    // first active pixel and keep it fixed through every line of this frame.
++    (* async_reg="true" *) reg [1:0] S_mode_meta, S_mode_sync;
++    reg [1:0] S_visible_mode;
++    reg S_mode_pending;
++    wire [1:0] S_pixel_mode = S_mode_pending ? S_mode_sync : S_visible_mode;
++    always @(posedge S_dsi_tx_clk or negedge S_dsi_ready_n) begin
++        if(!S_dsi_ready_n) begin
++            S_mode_meta<=0; S_mode_sync<=0; S_visible_mode<=0; S_mode_pending<=1;
++        end else begin
++            S_mode_meta<=S_ddr_frame_mode; S_mode_sync<=S_mode_meta;
++            if(S_base_vsync) S_mode_pending<=1;
++            else if(S_base_de && S_mode_pending) begin
++                S_visible_mode<=S_mode_sync; S_mode_pending<=0;
++            end
++        end
++    end
+     always @(posedge S_10m_clk or negedge S_lp_reset_n) begin
+         if (!S_lp_reset_n) S_delay_cnt <= 32'd0;
+         else if (S_delay_cnt < 32'd10000000) S_delay_cnt <= S_delay_cnt + 1'b1;
+@@ -708,7 +750,8 @@
+ 
+ 
+ //ISP算法顶层模块
+-isp_top u_isp_top (
++isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
++.I_mode(S_camera_mode), .O_frame_mode(S_isp_frame_mode),
+ .axi4s_video_aclk(S_csi_rx_clk),
+ .I_rst_n         (S_rst_n),
+ .I_tlast         (S_raw_tlast	),
+@@ -732,6 +775,8 @@
+         .I_camera_frame_start ( S_ISP_O_tuser  ),
+         .I_camera_valid       ( S_ISP_O_tvalid ),
+         .I_camera_data        ( S_ISP_O_tdata  ),
++        .I_camera_mode        ( S_isp_frame_mode ),
++        .O_slot_modes         ( S_slot_modes ),
+         .I_mipi_rx_error      ( 1'b0			      ),
+ 
+         .I_ddr_clk            ( S_ddr_clk             ),
+@@ -767,6 +812,8 @@
+         .O_video_out_rd_busy ( S_video_out_rd_busy  ),
+         .I_video_in_wr_busy  ( S_video_in_wr_busy   ),
+         .I_video_out_rp      ( S_video_out_rp       ),
++        .I_slot_modes        ( S_slot_modes ),
++        .O_frame_mode        ( S_ddr_frame_mode ),
+  
+         .O_ddr_user_rd_en    ( S_vo_ddr_rd_en       ),
+         .O_ddr_user_addr     ( S_vo_ddr_rd_addr     ),
+@@ -902,6 +949,7 @@
+         .TEXT_COLOR(OSD_TEXT_COLOR)
+     ) u_dsi_osd_overlay (
+         .I_clk(S_dsi_tx_clk), .I_rst_n(S_dsi_ready_n),
++        .I_enable(S_pixel_mode==2),
+         .I_vsync(S_base_vsync), .I_hsync(S_base_hsync),
+         .I_de(S_base_de), .I_data(S_base_data),
+         .O_vsync(S_mixer_vsync), .O_hsync(S_mixer_hsync),
+--- /dev/null
++++ b/user_source/hdl_source/isp/edge_detect_96.v
+@@ -0,0 +1,159 @@
++module edge_detect_96 #(
++    parameter IMG_WIDTH  = 1280,
++    parameter IMG_HEIGHT = 720,
++    parameter EDGE_TH    = 11'd80
++)(
++    input               I_clk,
++    input               I_rst_n,
++    input               I_tlast,
++    input               I_tuser,
++    input      [95:0]   I_tdata,
++    input               I_tvalid,
++    input               I_tready,
++    output reg          O_tlast,
++    output reg          O_tuser,
++    output reg [95:0]   O_tdata,
++    output reg          O_tvalid,
++    output              O_tready
++);
++
++assign O_tready = I_tready;
++
++wire [23:0] pix0 = I_tdata[95:72];
++wire [23:0] pix1 = I_tdata[71:48];
++wire [23:0] pix2 = I_tdata[47:24];
++wire [23:0] pix3 = I_tdata[23:0];
++
++// Low-cost luminance approximation: R/4 + G/2 + B/4.  Its maximum is
++// 253, so it cannot overflow an 8-bit result and requires no divider.
++wire [7:0] gray0 = {2'b0,pix0[23:18]} + {1'b0,pix0[15:9]} + {2'b0,pix0[7:2]};
++wire [7:0] gray1 = {2'b0,pix1[23:18]} + {1'b0,pix1[15:9]} + {2'b0,pix1[7:2]};
++wire [7:0] gray2 = {2'b0,pix2[23:18]} + {1'b0,pix2[15:9]} + {2'b0,pix2[7:2]};
++wire [7:0] gray3 = {2'b0,pix3[23:18]} + {1'b0,pix3[15:9]} + {2'b0,pix3[7:2]};
++
++localparam IMG_WIDTH_GRP = (IMG_WIDTH >> 2);
++
++// Use two grayscale samples per 4-pixel input beat.  Each sample represents
++// a neighbouring pair of pixels, providing 640 horizontal edge samples while
++// keeping the two line buffers small enough for this device.
++wire [8:0] pair_sum0 = {1'b0,gray0} + {1'b0,gray1};
++wire [8:0] pair_sum1 = {1'b0,gray2} + {1'b0,gray3};
++wire [7:0] pair0 = pair_sum0[8:1];
++wire [7:0] pair1 = pair_sum1[8:1];
++
++(* ram_style = "block" *) reg [15:0] line1_mem [0:IMG_WIDTH_GRP-1];
++(* ram_style = "block" *) reg [15:0] line2_mem [0:IMG_WIDTH_GRP-1];
++
++reg [10:0] x_grp;
++reg [10:0] y_pos;
++
++// A frame marker can arrive with the first beat or during blanking.
++// Force the first valid beat to address zero even after a truncated frame.
++wire [10:0] mem_addr = I_tuser ? 11'd0 : x_grp;
++wire [15:0] top_word = line2_mem[mem_addr];
++wire [15:0] mid_word = line1_mem[mem_addr];
++wire [15:0] bot_word = {pair0,pair1};
++
++wire [7:0] top0 = top_word[15:8];
++wire [7:0] top1 = top_word[7:0];
++wire [7:0] mid0 = mid_word[15:8];
++wire [7:0] mid1 = mid_word[7:0];
++
++reg [7:0] top_prev2, top_prev1;
++reg [7:0] mid_prev2, mid_prev1;
++reg [7:0] bot_prev2, bot_prev1;
++
++function [13:0] sobel_mag;
++    input [7:0] a00, a01, a02;
++    input [7:0] a10, a11, a12;
++    input [7:0] a20, a21, a22;
++    reg signed [12:0] gx_f;
++    reg signed [12:0] gy_f;
++    reg [12:0] abs_gx_f;
++    reg [12:0] abs_gy_f;
++    begin
++        gx_f = -$signed({1'b0,a00}) + $signed({1'b0,a02})
++             - ($signed({1'b0,a10}) <<< 1) + ($signed({1'b0,a12}) <<< 1)
++             - $signed({1'b0,a20}) + $signed({1'b0,a22});
++        gy_f =  $signed({1'b0,a00}) + ($signed({1'b0,a01}) <<< 1) + $signed({1'b0,a02})
++             - $signed({1'b0,a20}) - ($signed({1'b0,a21}) <<< 1) - $signed({1'b0,a22});
++        abs_gx_f = gx_f[12] ? (~gx_f + 1'b1) : gx_f;
++        abs_gy_f = gy_f[12] ? (~gy_f + 1'b1) : gy_f;
++        sobel_mag = abs_gx_f + abs_gy_f;
++    end
++endfunction
++
++// Two Sobel windows are evaluated per input beat. Each result is duplicated
++// to its corresponding pair of output pixels.
++wire [13:0] mag0 = sobel_mag(top_prev2,top_prev1,top0,
++                             mid_prev2,mid_prev1,mid0,
++                             bot_prev2,bot_prev1,pair0);
++wire [13:0] mag1 = sobel_mag(top_prev1,top0,top1,
++                             mid_prev1,mid0,mid1,
++                             bot_prev1,pair0,pair1);
++
++wire window_valid = (y_pos >= 11'd2) && (x_grp != 11'd0) && !I_tuser;
++wire edge0 = window_valid && (mag0 >= EDGE_TH);
++wire edge1 = window_valid && (mag1 >= EDGE_TH);
++
++wire [23:0] out0 = edge0 ? 24'hffffff : 24'h000000;
++wire [23:0] out1 = edge1 ? 24'hffffff : 24'h000000;
++
++always @(posedge I_clk or negedge I_rst_n) begin
++    if(!I_rst_n) begin
++        O_tlast  <= 1'b0;
++        O_tuser  <= 1'b0;
++        O_tdata  <= 96'd0;
++        O_tvalid <= 1'b0;
++        x_grp    <= 11'd0;
++        y_pos    <= 11'd0;
++        top_prev2 <= 8'd0; top_prev1 <= 8'd0;
++        mid_prev2 <= 8'd0; mid_prev1 <= 8'd0;
++        bot_prev2 <= 8'd0; bot_prev1 <= 8'd0;
++        // Do not clear line memories here.  A reset loop turns the 10-Kbit
++        // buffers into slice registers on this device.  The first two rows
++        // are masked by window_valid and naturally initialize both buffers.
++    end else begin
++        O_tlast  <= I_tlast;
++        O_tuser  <= I_tuser;
++        O_tvalid <= I_tvalid;
++
++        if(I_tvalid) begin
++            O_tdata <= {out0,out0,out1,out1};
++
++            line2_mem[mem_addr] <= mid_word;
++            line1_mem[mem_addr] <= bot_word;
++
++            top_prev2 <= top0; top_prev1 <= top1;
++            mid_prev2 <= mid0; mid_prev1 <= mid1;
++            bot_prev2 <= pair0; bot_prev1 <= pair1;
++
++            if(I_tuser) begin
++                x_grp <= 11'd1;
++                y_pos <= 11'd0;
++            end else if(x_grp == IMG_WIDTH_GRP - 1) begin
++                x_grp <= 11'd0;
++                if(y_pos == IMG_HEIGHT - 1)
++                    y_pos <= 11'd0;
++                else
++                    y_pos <= y_pos + 1'b1;
++                top_prev2 <= 8'd0; top_prev1 <= 8'd0;
++                mid_prev2 <= 8'd0; mid_prev1 <= 8'd0;
++                bot_prev2 <= 8'd0; bot_prev1 <= 8'd0;
++            end else begin
++                x_grp <= x_grp + 1'b1;
++            end
++        end else begin
++            O_tdata <= 96'd0;
++            if(I_tuser) begin
++                x_grp <= 11'd0;
++                y_pos <= 11'd0;
++                top_prev2 <= 8'd0; top_prev1 <= 8'd0;
++                mid_prev2 <= 8'd0; mid_prev1 <= 8'd0;
++                bot_prev2 <= 8'd0; bot_prev1 <= 8'd0;
++            end
++        end
++    end
++end
++
++endmodule
+--- /dev/null
++++ b/user_source/hdl_source/isp/isp_frame_select_96.v
+@@ -0,0 +1,34 @@
++// Run the original edge engine continuously. Match its one-cycle latency
++// on the color path, and select once per AWB frame, before the shared packer.
++module isp_frame_select_96 #(
++    parameter IMG_WIDTH=1280, IMG_HEIGHT=720, EDGE_THRESHOLD=14'd80
++)(
++    input wire I_clk,I_rst_n,
++    input wire [1:0] I_mode,
++    input wire [95:0] I_data,
++    input wire I_valid,I_user,I_last,I_ready,
++    output wire [95:0] O_data,
++    output wire O_valid,O_user,O_last,O_ready,
++    output reg [1:0] O_frame_mode
++);
++    reg [95:0] color_data;
++    wire [95:0] edge_data;
++    wire edge_valid, edge_user, edge_last;
++    reg user_d;
++    always @(posedge I_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin color_data<=0; O_frame_mode<=0; user_d<=0; end
++        else begin
++            color_data<=I_data; user_d<=I_user;
++            if(I_user && !user_d) O_frame_mode <= (I_mode<=2) ? I_mode : 2'd0;
++        end
++    end
++    edge_detect_96 #(.IMG_WIDTH(IMG_WIDTH),.IMG_HEIGHT(IMG_HEIGHT),
++       .EDGE_TH(EDGE_THRESHOLD)) u_edge (
++       .I_clk(I_clk),.I_rst_n(I_rst_n),.I_tdata(I_data),.I_tvalid(I_valid),
++       .I_tuser(I_user),.I_tlast(I_last),.I_tready(I_ready),.O_tready(O_ready),
++       .O_tdata(edge_data),.O_tvalid(edge_valid),.O_tuser(edge_user),.O_tlast(edge_last));
++    assign O_data=(O_frame_mode==1) ? edge_data : color_data;
++    assign O_valid=edge_valid;
++    assign O_user=edge_user;
++    assign O_last=edge_last;
++endmodule
+--- a/user_source/hdl_source/isp/isp_top.v
++++ b/user_source/hdl_source/isp/isp_top.v
+@@ -1,115 +1,79 @@
+-module isp_top (
+-    input 			axi4s_video_aclk,
+-    input 			I_rst_n			,
+-    input 			I_tlast			,
+-    input 			I_tuser			,
+-    input [39:0] 	I_tdata			,
+-    input 			I_tvalid		,
+-    input [9:0] 	I_tdest			,
+-    input 			O_tready		,
+-    output [127:0] 	O_tdata			,
+-    output 			O_tlast			,
+-    output 			O_tuser			,
+-    output 			O_tvalid		,
+-    output 			I_tready
++// SC500 720P ISP with the lab-ex2 Sobel stage before DDR packing.
++// This reference pipeline is a continuous video stream; it has no stall buffer.
++module isp_top #(
++    parameter EDGE_THRESHOLD = 14'd80
++)(
++    input          axi4s_video_aclk,
++    input          I_rst_n,
++    input [1:0]    I_mode,
++    output [1:0]   O_frame_mode,
++    input          I_tlast,
++    input          I_tuser,
++    input  [39:0]  I_tdata,
++    input          I_tvalid,
++    input  [9:0]   I_tdest,
++    input          O_tready,
++    output [127:0] O_tdata,
++    output         O_tlast,
++    output         O_tuser,
++    output         O_tvalid,
++    output         I_tready
+ );
+- 
+-wire         m_aixs_tvalid;  //synthesis keep 
+-  wire [127:0] m_aixs_tdata;  //synthesis keep 
+-  wire         m_aixs_tuser;  //synthesis keep 
+-  wire         m_aixs_tlast;  //synthesis keep 
+-  wire         m_aixs_tready;  //synthesis keep 
+-  
+-  wire [ 95:0] m_aixs_tdata_96;  //synthesis keep 
++    wire [127:0] demosaic_data;
++    wire [95:0] rgb_data;
++    wire demosaic_last, demosaic_user, demosaic_valid, demosaic_ready;
++    wire [95:0] awb_data;
++    wire awb_last, awb_user, awb_valid, awb_ready;
++    wire [95:0] edge_data;
++    wire edge_last, edge_user, edge_valid;
+ 
+-
+-  wire         awb_O_tlast;  //synthesis keep 
+-  wire         awb_O_tuser;  //synthesis keep 
+-  wire [ 95:0] awb_O_tdata;  //synthesis keep 
+-  wire         awb_O_tvalid;  //synthesis keep 
+-  wire         awb_O_tready;  //synthesis keep 
+-
+-  wire         awb_O_tuser_128;  //synthesis keep 
+-  wire         awb_O_tvalid_128;  //synthesis keep 
+-  wire [127:0] awb_O_tdata_128;  //synthesis keep 
+-
+-  assign awb_O_tready = O_tready;
+-  assign O_tdata  = awb_O_tdata_128;
+-  assign O_tlast  = awb_O_tlast    ;
+-  assign O_tuser  = awb_O_tuser_128    ;
+-  assign O_tvalid = awb_O_tvalid_128   ;
+-  
+-  //assign m_aixs_tready = O_tready;
+-  //assign O_tdata  = m_aixs_tdata;
+-  //assign O_tlast  = m_aixs_tlast    ;
+-  //assign O_tuser  = m_aixs_tuser    ;
+-  //assign O_tvalid = m_aixs_tvalid   ;
+- 
+- 
+-demosaic #(
+-    .IMG_HEIGHT          (720 ), // 图像高度
+-    .IMG_WIDTH           (1280), // 图像宽度
+-    .data_complete_delay (50  ),
+-    .BAYER_MODE          ("BGGR")
+-)
+-u_demosaic
+-(
+-    .I_clk   			(axi4s_video_aclk)	,   // 时钟信号
+-    .I_rst_n 			(I_rst_n)	,   // 复位信号，低有效
+-    .axi4s_video_tdata 	(I_tdata)	,  // AXI4-Stream视频数据
+-    .axi4s_video_tdest 	(I_tdest)	,
+-    .axi4s_video_tlast 	(I_tlast)	,  // 行结束信号
+-    .axi4s_video_tvalid	(I_tvalid)	,  // 数据有效信号
+-    .axi4s_video_tuser 	(I_tuser)	,  // 帧开始信号
+-    .axi4s_video_tready	(I_tready)	,  // 从模块准备好接受数据
+-    .O_tlast  			(m_aixs_tlast)	,  // 输出行结束信号
+-    .O_tuser  			(m_aixs_tuser)	,  // 输出帧开始信号
+-    .O_tdata  			(m_aixs_tdata)	,  // 输出数据
+-    .O_tvalid 			(m_aixs_tvalid)	,  // 输出数据有效信号
+-    .O_tready   		(m_aixs_tready)	   // 输出数据准备好信号
+-);
+- 
+-data128_96 u_data128_96 (
+-    .I_tdata(m_aixs_tdata),
+-    .O_tdata(m_aixs_tdata_96)
+-);
+-
+-awb #(
+-    .IMG_HEIGHT(720 ),
+-    .IMG_WIDTH (1280)
+-) u_awb (
+-    .I_clk   (axi4s_video_aclk),
+-    .I_rst_n (I_rst_n),
+-    .I_tlast (m_aixs_tlast),
+-    .I_tuser (m_aixs_tuser),
+-    .I_tdata (m_aixs_tdata_96),
+-    .I_tvalid(m_aixs_tvalid),
+-    .I_tready(m_aixs_tready),
+-    .O_tlast (awb_O_tlast ),
+-    .O_tuser (awb_O_tuser ),
+-    .O_tdata (awb_O_tdata ),
+-    .O_tvalid(awb_O_tvalid),
+-    .O_tready(awb_O_tready)
+-);
+-
+-    data_96bit_to_128bit u_data_96bit_to_128bit(
+-        .I_clk              ( axi4s_video_aclk  ),
+-        .I_rst_n            ( I_rst_n           ),
+-	
+-        .I_96b_frame_start  ( awb_O_tuser	    ),
+-        .I_96b_valid        ( awb_O_tvalid 		),
+-        .I_96b_data         ( awb_O_tdata		),
+-	
+-        .O_128b_frame_start ( awb_O_tuser_128  	),
+-        .O_128b_valid       ( awb_O_tvalid_128 	),
+-        .O_128b_data        ( awb_O_tdata_128  	)
++    demosaic #(
++        .IMG_HEIGHT(720), .IMG_WIDTH(1280),
++        .data_complete_delay(50), .BAYER_MODE("BGGR")
++    ) u_demosaic (
++        .I_clk(axi4s_video_aclk), .I_rst_n(I_rst_n),
++        .axi4s_video_tdata(I_tdata), .axi4s_video_tdest(I_tdest),
++        .axi4s_video_tlast(I_tlast), .axi4s_video_tuser(I_tuser),
++        .axi4s_video_tvalid(I_tvalid), .axi4s_video_tready(I_tready),
++        .O_tdata(demosaic_data), .O_tlast(demosaic_last),
++        .O_tuser(demosaic_user), .O_tvalid(demosaic_valid),
++        .O_tready(demosaic_ready)
+     );
+ 
++    data128_96 u_data128_96 (
++        .I_tdata(demosaic_data), .O_tdata(rgb_data)
++    );
+ 
++    awb #(.IMG_HEIGHT(720), .IMG_WIDTH(1280)) u_awb (
++        .I_clk(axi4s_video_aclk), .I_rst_n(I_rst_n),
++        .I_tlast(demosaic_last), .I_tuser(demosaic_user),
++        .I_tdata(rgb_data), .I_tvalid(demosaic_valid),
++        .I_tready(demosaic_ready),
++        .O_tlast(awb_last), .O_tuser(awb_user),
++        .O_tdata(awb_data), .O_tvalid(awb_valid), .O_tready(awb_ready)
++    );
+ 
+-//data96_128 u_data96_128 (
+-//    .I_tdata(awb_O_tdata),
+-//    .O_tdata(awb_O_tdata_128)
+-//);
+-	
++    isp_frame_select_96 #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_frame_select (
++        .I_clk(axi4s_video_aclk),.I_rst_n(I_rst_n),.I_mode(I_mode),
++        .I_data(awb_data),.I_valid(awb_valid),.I_user(awb_user),.I_last(awb_last),
++        .I_ready(O_tready),.O_ready(awb_ready),.O_data(edge_data),
++        .O_valid(edge_valid),.O_user(edge_user),.O_last(edge_last),
++        .O_frame_mode(O_frame_mode));
++
++    data_96bit_to_128bit u_data_96bit_to_128bit (
++        .I_clk(axi4s_video_aclk), .I_rst_n(I_rst_n),
++        .I_96b_frame_start(edge_user), .I_96b_valid(edge_valid),
++        .I_96b_data(edge_data),
++        .O_128b_frame_start(O_tuser), .O_128b_valid(O_tvalid),
++        .O_128b_data(O_tdata)
++    );
++
++    // The DDR writer consumes frame_start/valid/data only. For the legacy
++    // status port, delay the edge end-of-line pulse through the packer cycle.
++    reg packed_last;
++    always @(posedge axi4s_video_aclk or negedge I_rst_n) begin
++        if (!I_rst_n) packed_last <= 1'b0;
++        else          packed_last <= edge_last;
++    end
++    assign O_tlast = packed_last;
+ endmodule
+--- a/user_source/hdl_source/osd/dsi_osd_overlay.v
++++ b/user_source/hdl_source/osd/dsi_osd_overlay.v
+@@ -11,6 +11,7 @@
+ )(
+     input wire I_clk,
+     input wire I_rst_n,
++    input wire I_enable,
+     input wire I_vsync, I_hsync, I_de,
+     input wire [23:0] I_data,
+     output reg O_vsync, O_hsync, O_de,
+@@ -156,8 +157,8 @@
+             O_vsync<=0; O_hsync<=0; O_de<=0; O_data<=0;
+         end else begin
+             s1_vs<=I_vsync; s1_hs<=I_hsync; s1_de<=I_de; s1_rgb<=I_data;
+-            s1_logo<=logo_region;
+-            s1_text<=text_region && char_bits[15-char_col];
++            s1_logo<=logo_region && I_enable;
++            s1_text<=text_region && char_bits[15-char_col] && I_enable;
+             O_vsync<=s1_vs; O_hsync<=s1_hs; O_de<=s1_de;
+             if (!s1_de) O_data<=0;
+             else if (s1_logo && logo_pixel[24]) O_data<=logo_pixel[23:0];
+--- /dev/null
++++ b/user_source/hdl_source/touch/gt911_touch.v
+@@ -0,0 +1,89 @@
++// GT911 status-only polling: positions are irrelevant for whole-screen taps.
++// Keep the module's existing calibration/configuration; never rewrite 0x8047.
++module gt911_touch #(
++    parameter CLK_HZ=25000000,
++    parameter I2C_HZ=100000,
++    parameter POLL_MS=5,
++    parameter RESET_LOW_MS=20,
++    parameter ADDRESS_HOLD_MS=6,
++    parameter INT_SYNC_MS=55,
++    parameter STARTUP_MS=50,
++    parameter RELEASE_MS=30
++)(
++    input wire I_clk, I_rst_n,
++    inout wire IO_scl, IO_sda, IO_int,
++    output wire O_reset_n,
++    output wire O_press, O_held,
++    output reg O_online,
++    output reg [15:0] O_error_count
++);
++    localparam RESET=0, HOLD_ADDR=1, SYNC_INT=2, STARTUP=3,
++      POLL_WAIT=4, READ_START=5, READ_WAIT=6, CLEAR_START=7, CLEAR_WAIT=8;
++    reg [3:0] state;
++    reg [31:0] timer;
++    reg start, read_op;
++    reg [7:0] status;
++    reg report_valid;
++    wire busy, done, error;
++    wire [7:0] rdata;
++    // INT is actively low only during reset/address selection/synchronization.
++    // Operational polling ignores INT, independent of stored IRQ polarity.
++    assign IO_int=(state<=SYNC_INT) ? 1'b0 : 1'bz;
++    assign O_reset_n=I_rst_n && (state!=RESET);
++    i2c_reg16_byte #(.CLK_HZ(CLK_HZ),.I2C_HZ(I2C_HZ)) u_i2c (
++      .I_clk(I_clk),.I_rst_n(I_rst_n),.I_start(start),.I_read(read_op),
++      .I_addr(7'h5d),.I_reg(16'h814e),.I_wdata(8'h00),
++      .IO_scl(IO_scl),.IO_sda(IO_sda),.O_busy(busy),.O_done(done),
++      .O_error(error),.O_rdata(rdata));
++    touch_press_once #(.CLK_HZ(CLK_HZ),.RELEASE_MS(RELEASE_MS)) u_press (
++      .I_clk(I_clk),.I_rst_n(I_rst_n),.I_report_valid(report_valid),
++      .I_contacts(status[3:0]),.O_press(O_press),.O_held(O_held));
++    always @(posedge I_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin
++            state<=RESET; timer<=0; start<=0; read_op<=1;
++            status<=0; report_valid<=0; O_online<=0; O_error_count<=0;
++        end else begin
++            start<=0; report_valid<=0;
++            case(state)
++            RESET: if(timer >= (CLK_HZ/1000)*RESET_LOW_MS-1) begin
++                timer<=0; state<=HOLD_ADDR;
++            end else timer<=timer+1'b1;
++            HOLD_ADDR: if(timer >= (CLK_HZ/1000)*ADDRESS_HOLD_MS-1) begin
++                timer<=0; state<=SYNC_INT;
++            end else timer<=timer+1'b1;
++            SYNC_INT: if(timer >= (CLK_HZ/1000)*INT_SYNC_MS-1) begin
++                timer<=0; state<=STARTUP;
++            end else timer<=timer+1'b1;
++            STARTUP: if(timer >= (CLK_HZ/1000)*STARTUP_MS-1) begin
++                timer<=0; state<=READ_START;
++            end else timer<=timer+1'b1;
++            POLL_WAIT: if(timer >= (CLK_HZ/1000)*POLL_MS-1) begin
++                timer<=0; state<=READ_START;
++            end else timer<=timer+1'b1;
++            READ_START: if(!busy) begin start<=1; read_op<=1; state<=READ_WAIT; end
++            READ_WAIT: if(done) begin
++                if(error) begin
++                    O_online<=0;
++                    if(O_error_count!=16'hffff) O_error_count<=O_error_count+1'b1;
++                    state<=POLL_WAIT; timer<=0;
++                end else begin
++                    O_online<=1; status<=rdata;
++                    if(rdata[7]) state<=CLEAR_START;
++                    else begin state<=POLL_WAIT; timer<=0; end
++                end
++            end
++            CLEAR_START: if(!busy) begin start<=1; read_op<=0; state<=CLEAR_WAIT; end
++            CLEAR_WAIT: if(done) begin
++                // Commit once only after status-clear ACK. A retried read after
++                // a failed clear can never consume the same report twice.
++                if(error) begin
++                    O_online<=0;
++                    if(O_error_count!=16'hffff) O_error_count<=O_error_count+1'b1;
++                end else if(status[3:0]<=5) report_valid<=1;
++                timer<=0; state<=POLL_WAIT;
++            end
++            default: begin state<=RESET; timer<=0; end
++            endcase
++        end
++    end
++endmodule
+--- /dev/null
++++ b/user_source/hdl_source/touch/i2c_reg16_byte.v
+@@ -0,0 +1,141 @@
++// Single-byte, 16-bit-register I2C master. Both wires are open drain.
++// A read uses repeated START and NACKs its only received byte.
++module i2c_reg16_byte #(
++    parameter CLK_HZ = 25000000,
++    parameter I2C_HZ = 100000,
++    parameter TIMEOUT_CYCLES = CLK_HZ/100
++)(
++    input wire I_clk, I_rst_n, I_start, I_read,
++    input wire [6:0] I_addr,
++    input wire [15:0] I_reg,
++    input wire [7:0] I_wdata,
++    inout wire IO_scl, IO_sda,
++    output reg O_busy, O_done, O_error,
++    output reg [7:0] O_rdata
++);
++    localparam DIV = (CLK_HZ + 4*I2C_HZ-1)/(4*I2C_HZ);
++    localparam IDLE=0, START0=1, START1=2, START2=3,
++      TX0=4, TX1=5, TX2=6, TX3=7,
++      ACK0=8, ACK1=9, ACK2=10, ACK3=11,
++      REP0=12, REP1=13, REP2=14, REP3=15,
++      RX0=16, RX1=17, RX2=18, RX3=19,
++      NACK0=20, NACK1=21, NACK2=22, NACK3=23,
++      STOP0=24, STOP1=25, STOP2=26, FINISH=27,
++      REC0=28, REC1=29, REC2=30, REC3=31;
++    reg [5:0] state;
++    reg scl_low, sda_low;
++    (* async_reg="true" *) reg [1:0] scl_sync, sda_sync;
++    reg [31:0] div_count, timeout_count;
++    reg [7:0] tx, rx, wdata;
++    reg [15:0] reg_addr;
++    reg [6:0] dev_addr;
++    reg is_read;
++    reg [2:0] bitno, byte_index;
++    reg [3:0] recovery_count;
++    assign IO_scl = scl_low ? 1'b0 : 1'bz;
++    assign IO_sda = sda_low ? 1'b0 : 1'bz;
++    always @(posedge I_clk or negedge I_rst_n) begin
++        if (!I_rst_n) begin scl_sync<=3; sda_sync<=3; end
++        else begin scl_sync<={scl_sync[0],IO_scl}; sda_sync<={sda_sync[0],IO_sda}; end
++    end
++    always @(posedge I_clk or negedge I_rst_n) begin
++        if (!I_rst_n) begin
++            state<=IDLE; scl_low<=0; sda_low<=0;
++            O_busy<=0; O_done<=0; O_error<=0; O_rdata<=0;
++            div_count<=0; timeout_count<=0;
++            tx<=0; rx<=0; dev_addr<=0; reg_addr<=0; wdata<=0;
++            is_read<=0; bitno<=7; byte_index<=0; recovery_count<=0;
++        end else begin
++            O_done<=0;
++            if (!O_busy) begin
++                div_count<=0; timeout_count<=0;
++                if (I_start) begin
++                    O_busy<=1; O_error<=0;
++                    dev_addr<=I_addr; reg_addr<=I_reg; wdata<=I_wdata;
++                    is_read<=I_read; tx<={I_addr,1'b0};
++                    bitno<=7; byte_index<=0; recovery_count<=0;
++                    scl_low<=0; sda_low<=0; state<=START0;
++                end
++            end else if (timeout_count == TIMEOUT_CYCLES-1) begin
++                // Stuck bus/clock stretching must not fabricate a touch.
++                scl_low<=0; sda_low<=0; O_busy<=0; O_done<=1;
++                O_error<=1; state<=IDLE; div_count<=0; timeout_count<=0;
++            end else begin
++                timeout_count<=timeout_count+1'b1;
++                if (div_count == DIV-1) begin
++                    div_count<=0;
++                    case(state)
++                    START0: if (scl_sync[1]) begin
++                        if (sda_sync[1]) state<=START1;
++                        else state<=REC0;
++                    end
++                    START1: begin sda_low<=1; state<=START2; end
++                    START2: begin scl_low<=1; state<=TX0; end
++                    TX0: begin sda_low<=!tx[bitno]; state<=TX1; end
++                    TX1: begin scl_low<=0; if(scl_sync[1]) state<=TX2; end
++                    TX2: state<=TX3;
++                    TX3: begin
++                        scl_low<=1;
++                        if(bitno==0) state<=ACK0;
++                        else begin bitno<=bitno-1'b1; state<=TX0; end
++                    end
++                    ACK0: begin sda_low<=0; state<=ACK1; end
++                    ACK1: begin scl_low<=0; if(scl_sync[1]) state<=ACK2; end
++                    ACK2: begin
++                        if(sda_sync[1]) O_error<=1;
++                        state<=ACK3;
++                    end
++                    ACK3: begin
++                        scl_low<=1; bitno<=7;
++                        if(O_error) state<=STOP0;
++                        else case(byte_index)
++                        0: begin tx<=reg_addr[15:8]; byte_index<=1; state<=TX0; end
++                        1: begin tx<=reg_addr[7:0]; byte_index<=2; state<=TX0; end
++                        2: if(is_read) state<=REP0;
++                           else begin tx<=wdata; byte_index<=3; state<=TX0; end
++                        3: state<=STOP0;
++                        4: begin rx<=0; state<=RX0; end
++                        default: state<=STOP0;
++                        endcase
++                    end
++                    REP0: begin sda_low<=0; state<=REP1; end
++                    REP1: begin scl_low<=0; if(scl_sync[1]) state<=REP2; end
++                    REP2: begin sda_low<=1; state<=REP3; end
++                    REP3: begin
++                        scl_low<=1; tx<={dev_addr,1'b1}; byte_index<=4; state<=TX0;
++                    end
++                    RX0: begin sda_low<=0; state<=RX1; end
++                    RX1: begin scl_low<=0; if(scl_sync[1]) state<=RX2; end
++                    RX2: begin rx[bitno]<=sda_sync[1]; state<=RX3; end
++                    RX3: begin
++                        scl_low<=1;
++                        if(bitno==0) begin O_rdata<=rx; state<=NACK0; end
++                        else begin bitno<=bitno-1'b1; state<=RX0; end
++                    end
++                    NACK0: begin sda_low<=0; state<=NACK1; end
++                    NACK1: begin scl_low<=0; if(scl_sync[1]) state<=NACK2; end
++                    NACK2: state<=NACK3;
++                    NACK3: begin scl_low<=1; state<=STOP0; end
++                    STOP0: begin scl_low<=1; sda_low<=1; state<=STOP1; end
++                    STOP1: begin scl_low<=0; if(scl_sync[1]) state<=STOP2; end
++                    STOP2: begin sda_low<=0; state<=FINISH; end
++                    FINISH: begin
++                        if(!sda_sync[1]) O_error<=1;
++                        O_done<=1; O_busy<=0; state<=IDLE;
++                    end
++                    // Nine recovery clocks then STOP/error; the caller retries later.
++                    REC0: begin scl_low<=1; sda_low<=0; state<=REC1; end
++                    REC1: begin scl_low<=0; if(scl_sync[1]) state<=REC2; end
++                    REC2: state<=REC3;
++                    REC3: begin
++                        scl_low<=1;
++                        if(recovery_count==8) begin O_error<=1; state<=STOP0; end
++                        else begin recovery_count<=recovery_count+1'b1; state<=REC0; end
++                    end
++                    default: state<=STOP0;
++                    endcase
++                end else div_count<=div_count+1'b1;
++            end
++        end
++    end
++endmodule
+--- /dev/null
++++ b/user_source/hdl_source/touch/mode_mailbox.v
+@@ -0,0 +1,28 @@
++// Bundled-data CDC mailbox. Source payload is held until destination ACK;
++// the request toggle is synchronized before the destination captures it.
++module mode_mailbox (
++    input wire I_src_clk, I_dst_clk, I_rst_n,
++    input wire [1:0] I_mode,
++    output reg [1:0] O_mode
++);
++    reg [1:0] payload;
++    reg request, acknowledge;
++    (* async_reg="true" *) reg [1:0] ack_sync, req_sync;
++    reg req_delay;
++    always @(posedge I_src_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin payload<=0; request<=0; ack_sync<=0; end
++        else begin
++            ack_sync<={ack_sync[0],acknowledge};
++            if(request==ack_sync[1] && I_mode!=payload) begin
++                payload<=I_mode; request<=!request;
++            end
++        end
++    end
++    always @(posedge I_dst_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin req_sync<=0; req_delay<=0; acknowledge<=0; O_mode<=0; end
++        else begin
++            req_sync<={req_sync[0],request}; req_delay<=req_sync[1];
++            if(req_delay!=acknowledge) begin O_mode<=payload; acknowledge<=req_delay; end
++        end
++    end
++endmodule
+--- /dev/null
++++ b/user_source/hdl_source/touch/touch_press_once.v
+@@ -0,0 +1,34 @@
++// Consume only acknowledged, ready GT911 reports. No-data and bus failures
++// are not releases. A held finger, drag, or additional finger cannot repeat.
++module touch_press_once #(
++    parameter CLK_HZ=25000000,
++    parameter RELEASE_MS=30
++)(
++    input wire I_clk, I_rst_n, I_report_valid,
++    input wire [3:0] I_contacts,
++    output reg O_press,
++    output reg O_held
++);
++    localparam RELEASE_CYCLES=(CLK_HZ/1000)*RELEASE_MS;
++    reg released_seen;
++    reg [31:0] release_age;
++    always @(posedge I_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin
++            O_press<=0; O_held<=0; released_seen<=0; release_age<=0;
++        end else begin
++            O_press<=0;
++            if(released_seen && release_age<RELEASE_CYCLES)
++                release_age<=release_age+1'b1;
++            if(I_report_valid) begin
++                if(I_contacts!=0) begin
++                    // A subsequent valid press confirms a full release gap.
++                    if(!O_held || (released_seen && release_age>=RELEASE_CYCLES))
++                        O_press<=1;
++                    O_held<=1; released_seen<=0; release_age<=0;
++                end else if(!released_seen) begin
++                    released_seen<=1; release_age<=0;
++                end
++            end
++        end
++    end
++endmodule
+--- a/user_source/hdl_source/video_in.v
++++ b/user_source/hdl_source/video_in.v
+@@ -5,6 +5,8 @@
+ 
+     input wire         I_camera_clk,
+     input wire         I_camera_frame_start,
++    input wire[1:0]    I_camera_mode,
++    output reg[7:0]    O_slot_modes,
+     input wire         I_camera_valid,
+     input wire[127:0]  I_camera_data,
+     input wire         I_mipi_rx_error,
+@@ -36,6 +38,22 @@
+     wire[127:0] S_fifo_rd_data; 
+     reg         S_ddr_wr_valid;
+     reg[9:0]    S_ddr_wr_cnt;
++
++    // Bundled frame metadata precedes the synchronized frame-start pulse.
++    // It stays stable for the entire camera frame; no independently sampled
++    // mode request is used to label already-written pixels.
++    (* async_reg="true" *) reg [1:0] mode_meta, mode_sync;
++    always @(posedge I_ddr_clk or negedge I_rst_n) begin
++        if(!I_rst_n) begin mode_meta<=0; mode_sync<=0; O_slot_modes<=0; end
++        else begin
++            mode_meta<=I_camera_mode; mode_sync<=mode_meta;
++            if(S_frame_start && !I_display_pause) begin
++                if(I_mipi_rx_error)
++                    O_slot_modes[((S_video_in_wp-2'd1)&2'b11)*2 +: 2]<=mode_sync;
++                else O_slot_modes[S_video_in_wp*2 +: 2]<=mode_sync;
++            end
++        end
++    end
+ 
+     localparam IMAGE_BASE_ADDR_0 = 25'd0;
+     localparam IMAGE_BASE_ADDR_1 = 25'd7000000;
+--- a/user_source/hdl_source/video_out.v
++++ b/user_source/hdl_source/video_out.v
+@@ -8,6 +8,8 @@
+     output wire       O_video_out_rd_busy,  
+     input wire        I_video_in_wr_busy,   
+     input wire[1:0]   I_video_out_rp,
++    input wire[7:0]   I_slot_modes,
++    output reg[1:0]   O_frame_mode,
+     output wire       O_ddr_user_rd_en,
+     output reg[24:0]  O_ddr_user_addr,
+     input wire        I_ddr_user_ready,
+@@ -47,6 +49,12 @@
+ 	wire        S_fifo_emtpy;     
+ 
+ 
++
++    // Capture the selected slot's mode on the same edge as its read address.
++    always @(posedge I_ddr_clk or negedge I_rst_n) begin
++        if(!I_rst_n) O_frame_mode<=0;
++        else if(S_video_frame_start) O_frame_mode<=I_slot_modes[I_video_out_rp*2 +: 2];
++    end
+ 
+     localparam IMAGE_BASE_ADDR_0 = 25'd0;
+     localparam IMAGE_BASE_ADDR_1 = 25'd7000000;

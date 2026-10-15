@@ -1,0 +1,16 @@
+{
+  "input_archives_sha256": {
+    "lab_ex2_edge_DSI_SC500_7inch.zip": "8396bdf4cca660cbab6e38205be0577695d86376987d32e071070f19245cc128",
+    "lab_ex3_osd_DSI_SC500_7inch.zip": "2607f05e2b448786b8d01b9569246c9a3000e5f674cc5287cd3491c54e43af5f"
+  },
+  "edge_RTL": "byte-identical to final example 2",
+  "example3_unchanged_files": 231,
+  "example3_changed_files": [
+    "design_top_wrapper.v",
+    "isp/isp_top.v",
+    "video_in.v",
+    "video_out.v",
+    "osd/dsi_osd_overlay.v",
+    "constraints_source/pin.adc"
+  ]
+}
