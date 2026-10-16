@@ -47,12 +47,15 @@ def main():
                 expected.add('user_source/constraints_source/pin.adc')
                 assert set(changed)==expected,changed
                 print(f'PASS source provenance: {same} unchanged example-3 source/IP files, {len(changed)} intentional changes')
-    manifest=root/'BUILD_MANIFEST.json'
+    # Keep the v4.0.0 build manifest as historical evidence. A new source
+    # snapshot validates this UI worktree without relabelling old bitstreams.
+    manifest=root/'UI_WORKTREE_MANIFEST.json'
+    if not manifest.is_file(): manifest=root/'BUILD_MANIFEST.json'
     if manifest.is_file():
         obj=json.loads(manifest.read_text(encoding='utf-8'))
         for name,expected in obj['files'].items():
             assert sha((root/name).read_bytes())==expected,f'Hash mismatch: {name}'
-        print(f'PASS delivery SHA-256: {len(obj["files"])} files')
+        print(f'PASS {manifest.name} SHA-256: {len(obj["files"])} files')
     print(f'PASS portable TD dependency references: {count}')
 
 if __name__=='__main__':main()

@@ -243,8 +243,12 @@ module design_top_wrapper #(
     // continuous backlight enable, and a 10 ms settling time at 10 MHz.
     // No panel-specific reset pulse duration is supplied; do not invent one.
     // FFC pin 33 is TP-RES on this screen assembly; it is NOT LCD RESX.
-    // One screen contact advances the request 0 -> 1 -> 2 -> 0.
+    // A single contact on the matching toolbar button directly selects a mode.
     wire S_touch_press, S_touch_held, S_touch_online;
+    wire [15:0] S_touch_x, S_touch_y;
+    wire [3:0] S_touch_contacts;
+    wire S_touch_select_valid;
+    wire [1:0] S_touch_select_mode;
     wire [15:0] S_touch_errors;
     reg [1:0] S_requested_mode;
     wire [1:0] S_camera_mode, S_isp_frame_mode, S_ddr_frame_mode;
@@ -256,10 +260,15 @@ module design_top_wrapper #(
         .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
         .IO_scl(IO_touch_scl),.IO_sda(IO_touch_sda),.IO_int(IO_touch_int),
         .O_reset_n(O_screen_reset_n),.O_press(S_touch_press),.O_held(S_touch_held),
+        .O_x(S_touch_x),.O_y(S_touch_y),.O_contacts(S_touch_contacts),
         .O_online(S_touch_online),.O_error_count(S_touch_errors));
+    touch_mode_select u_touch_mode_select (
+        .I_press(S_touch_press),.I_contacts(S_touch_contacts),
+        .I_x(S_touch_x),.I_y(S_touch_y),
+        .O_valid(S_touch_select_valid),.O_mode(S_touch_select_mode));
     always @(posedge I_sys_clk or negedge S_touch_reset_n) begin
         if(!S_touch_reset_n) S_requested_mode<=0;
-        else if(S_touch_press) S_requested_mode <= (S_requested_mode==2) ? 2'd0 : S_requested_mode+1'b1;
+        else if(S_touch_select_valid) S_requested_mode<=S_touch_select_mode;
     end
     mode_mailbox u_mode_to_camera (
         .I_src_clk(I_sys_clk),.I_dst_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
@@ -960,16 +969,27 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
 
 
 
+    wire S_menu_vsync, S_menu_hsync, S_menu_de;
+    wire [23:0] S_menu_data;
+    dsi_menu_overlay u_dsi_menu_overlay (
+        .I_clk(S_dsi_tx_clk), .I_rst_n(S_dsi_ready_n),
+        .I_mode(S_pixel_mode),
+        .I_vsync(S_mixer_vsync), .I_hsync(S_mixer_hsync),
+        .I_de(S_mixer_de), .I_data(S_mixer_data),
+        .O_vsync(S_menu_vsync), .O_hsync(S_menu_hsync),
+        .O_de(S_menu_de), .O_data(S_menu_data)
+    );
+
     rgb_24b_to_32b #(
        .H_ACTIVE (1024)
     )u_rgb_24b_to_32b(
         .I_clk   ( S_dsi_tx_clk      ),
         .I_rst   ( ~S_dsi_ready_n    ),
 
-        .I_vsync ( S_mixer_vsync     ),
-        .I_hsync ( S_mixer_hsync     ),
-        .I_de    ( S_mixer_de        ),
-        .I_data  ( S_mixer_data      ),
+        .I_vsync ( S_menu_vsync      ),
+        .I_hsync ( S_menu_hsync      ),
+        .I_de    ( S_menu_de         ),
+        .I_data  ( S_menu_data       ),
                                                
         .O_vsync ( S_32b_vsync       ),
         .O_hsync ( S_32b_hsync       ),

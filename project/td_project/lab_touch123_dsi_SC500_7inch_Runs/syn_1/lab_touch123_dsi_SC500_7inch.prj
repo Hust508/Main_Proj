@@ -372,6 +372,10 @@
                 <Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/>
                 <Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="130"/>
             </FileInfo></File>
+            <File Path="../../../user_source/hdl_source/osd/dsi_menu_overlay.v"><FileInfo>
+                <Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/>
+                <Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="133"/>
+            </FileInfo></File>
             <File Path="../../../user_source/hdl_source/osd/osd_logo_rom.v"><FileInfo>
                 <Attr Name="UsedInSyn" Val="true"/><Attr Name="UsedInP&R" Val="true"/>
                 <Attr Name="BelongTo" Val="design_1"/><Attr Name="CompileOrder" Val="131"/>
@@ -418,6 +422,14 @@
                     <Attr Name="UsedInP&R" Val="true" />
                     <Attr Name="BelongTo" Val="design_1" />
                     <Attr Name="CompileOrder" Val="204" />
+                </FileInfo>
+            </File>
+            <File Path="../../../user_source/hdl_source/touch/touch_mode_select.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true" />
+                    <Attr Name="UsedInP&R" Val="true" />
+                    <Attr Name="BelongTo" Val="design_1" />
+                    <Attr Name="CompileOrder" Val="206" />
                 </FileInfo>
             </File>
             <File Path="../../../user_source/hdl_source/touch/mode_mailbox.v">

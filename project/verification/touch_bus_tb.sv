@@ -7,11 +7,16 @@ module touch_bus_tb;
     assign sda=(slave_low||stuck) ? 1'b0 : 1'bz;
     assign scl=stretch ? 1'b0 : 1'bz;
     wire reset_n,press,held,online;
+    wire [15:0] touch_x,touch_y;
+    wire [3:0] contacts;
     wire [15:0] errors;
     gt911_touch #(.CLK_HZ(1000000)) dut (
       .I_clk(clk),.I_rst_n(rst),.IO_scl(scl),.IO_sda(sda),.IO_int(int_pin),
-      .O_reset_n(reset_n),.O_press(press),.O_held(held),.O_online(online),.O_error_count(errors));
+      .O_reset_n(reset_n),.O_press(press),.O_held(held),
+      .O_x(touch_x),.O_y(touch_y),.O_contacts(contacts),
+      .O_online(online),.O_error_count(errors));
     reg [7:0] status=0;
+    reg [15:0] sample_x=16'd776, sample_y=16'd543;
     integer presses=0,reads=0,clears=0;
     reg [1:0] mode=0;
     always @(posedge clk) if(press) begin
@@ -52,15 +57,26 @@ module touch_bus_tb;
             if(address!==8'hba && address!==8'hbb) $fatal(1,"Wrong GT911 address %h",address);
             if(address==8'hba) begin
                 recv_byte(hi); recv_byte(lo);
-                if({hi,lo}!==16'h814e) $fatal(1,"Wrong status register");
+                if({hi,lo}!==16'h814e &&
+                   ({hi,lo}<16'h8150 || {hi,lo}>16'h8153))
+                    $fatal(1,"Wrong GT911 register %h",{hi,lo});
                 // The only write payload is zero; a high first clock with
                 // SDA high is the repeated-START setup, before its SDA fall.
                 @(posedge scl);
                 if(sda===1'b1) begin
                         start_condition(); recv_byte(address);
                         if(address!==8'hbb) $fatal(1,"Missing repeated START/read address");
-                        value=status; send_byte(value); reads=reads+1;
+                        case({hi,lo})
+                        16'h814e: value=status;
+                        16'h8150: value=sample_x[7:0];
+                        16'h8151: value=sample_x[15:8];
+                        16'h8152: value=sample_y[7:0];
+                        16'h8153: value=sample_y[15:8];
+                        default: value=0;
+                        endcase
+                        send_byte(value); reads=reads+1;
                 end else begin
+                        if({hi,lo}!==16'h814e) $fatal(1,"Only status may be written");
                         value[7]=sda;
                         for(j=6;j>=0;j=j-1) begin @(posedge scl);value[j]=sda;end
                         @(negedge scl);slave_low=!nack;
@@ -89,11 +105,16 @@ module touch_bus_tb;
         #56000000;if(int_pin!==1) $fatal(1,"INT must be released after reset");
         wait(online);
         report(8'h81);expect_count(1);
+        if(touch_x!==sample_x || touch_y!==sample_y || contacts!==1)
+            $fatal(1,"First contact coordinate mismatch");
         repeat(4) report(8'h81);expect_count(1); // hold/drag
         report(8'h82);expect_count(1); // additional finger
         #50000000;expect_count(1); // ready=0 is not a release
         report(8'h80);#1000000;report(8'h81);expect_count(1); // short release bounce
+        sample_x=16'd470;sample_y=16'd550;
         report(8'h80);#35000000;report(8'h81);expect_count(2);
+        if(touch_x!==sample_x || touch_y!==sample_y || contacts!==1)
+            $fatal(1,"Updated coordinate mismatch");
         // Failed reads and clear writes never release a held contact.
         nack=1;#20000000;expect_count(2);nack=0;
         report(8'h81);expect_count(2);
