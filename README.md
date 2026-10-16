@@ -1,6 +1,6 @@
 # Hust508 竞赛主工程 · 触屏界面版
 
-当前源码在 v4.0.0 三模式工程上增加固定底部工具栏。SC500CS 摄像头经 FPGA 处理，在 7 寸 DSI 屏显示；点按 **RAW / EDGE / OSD** 按键直接选择彩色原图、黑白边缘和彩色图加水印。详细设计见 [UI 设计说明](../UI_DESIGN_AND_IMPLEMENTATION.md)。
+当前源码在 v4.0.0 三模式工程上增加固定底部工具栏。SC500CS 摄像头经 FPGA 处理，在 7 寸 DSI 屏显示；点按 **RAW / EDGE / OSD** 按键直接选择彩色原图、黑白边缘和彩色图加水印。详细设计见 [UI 设计说明](UI_DESIGN_AND_IMPLEMENTATION.md)，界面示意见 [UI 预览图](UI_PREVIEW.svg)。
 
 `project/` 根目录的两个 `.bit` 已在 TD 重新生成，包含新 UI；`downloads/` 的 ZIP 仍是 v4.0.0 全屏点击循环版本。
 
