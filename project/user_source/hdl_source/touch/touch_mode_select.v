@@ -1,5 +1,4 @@
-// A one-shot press selects a visible button. Coordinates are GT911 pixels;
-// orientation parameters allow board-specific mounting without changing UI RTL.
+// Decode button hit regions inside the 150-pixel slide-up drawer.
 module touch_mode_select #(
     parameter SWAP_XY=0,
     parameter FLIP_X=0,
@@ -20,7 +19,7 @@ module touch_mode_select #(
     always @(*) begin
         O_valid=0;
         O_mode=0;
-        if(I_press && I_contacts==1 && in_bounds && y>=16'd522 && y<16'd586) begin
+        if(I_press && I_contacts==1 && in_bounds && y>=16'd495 && y<16'd580) begin
             if(x>=16'd24 && x<16'd312) begin O_valid=1; O_mode=0; end
             else if(x>=16'd364 && x<16'd660) begin O_valid=1; O_mode=1; end
             else if(x>=16'd712 && x<16'd1000) begin O_valid=1; O_mode=2; end

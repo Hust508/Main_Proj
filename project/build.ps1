@@ -21,15 +21,18 @@ foreach ($taskRun in @('syn_1', 'phy_1')) {
     $taskRunDir = Join-Path $PSScriptRoot "td_project/${taskProjectName}_Runs/$taskRun"
 
     $taskExtra = ''
+    $taskBefore = ''
 
     if ($taskRun -eq 'phy_1') {
 
+        $taskBefore = 'set phyWildParams {place seed 2}'
         $taskExtra = "set_param bitgen compress on`nbitgen -bit ${taskProjectName}.bit"
 
     }
 
     @"
 
+$taskBefore
 if {[catch {source {$taskFlow}} taskError]} {
 
     puts stderr `$taskError

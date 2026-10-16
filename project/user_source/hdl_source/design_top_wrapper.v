@@ -243,8 +243,9 @@ module design_top_wrapper #(
     // continuous backlight enable, and a 10 ms settling time at 10 MHz.
     // No panel-specific reset pulse duration is supplied; do not invent one.
     // FFC pin 33 is TP-RES on this screen assembly; it is NOT LCD RESX.
-    // A single contact on the matching toolbar button directly selects a mode.
+    // GT911 reports feed the swipe drawer and release-confirmed button taps.
     wire S_touch_press, S_touch_held, S_touch_online;
+    wire S_touch_report_valid, S_menu_visible;
     wire [15:0] S_touch_x, S_touch_y;
     wire [3:0] S_touch_contacts;
     wire S_touch_select_valid;
@@ -260,12 +261,15 @@ module design_top_wrapper #(
         .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
         .IO_scl(IO_touch_scl),.IO_sda(IO_touch_sda),.IO_int(IO_touch_int),
         .O_reset_n(O_screen_reset_n),.O_press(S_touch_press),.O_held(S_touch_held),
+        .O_report_valid(S_touch_report_valid),
         .O_x(S_touch_x),.O_y(S_touch_y),.O_contacts(S_touch_contacts),
         .O_online(S_touch_online),.O_error_count(S_touch_errors));
-    touch_mode_select u_touch_mode_select (
-        .I_press(S_touch_press),.I_contacts(S_touch_contacts),
+    touch_ui_controller u_touch_ui_controller (
+        .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
+        .I_report_valid(S_touch_report_valid),.I_contacts(S_touch_contacts),
         .I_x(S_touch_x),.I_y(S_touch_y),
-        .O_valid(S_touch_select_valid),.O_mode(S_touch_select_mode));
+        .O_menu_visible(S_menu_visible),
+        .O_select_valid(S_touch_select_valid),.O_select_mode(S_touch_select_mode));
     always @(posedge I_sys_clk or negedge S_touch_reset_n) begin
         if(!S_touch_reset_n) S_requested_mode<=0;
         else if(S_touch_select_valid) S_requested_mode<=S_touch_select_mode;
@@ -973,6 +977,7 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
     wire [23:0] S_menu_data;
     dsi_menu_overlay u_dsi_menu_overlay (
         .I_clk(S_dsi_tx_clk), .I_rst_n(S_dsi_ready_n),
+        .I_visible(S_menu_visible),
         .I_mode(S_pixel_mode),
         .I_vsync(S_mixer_vsync), .I_hsync(S_mixer_hsync),
         .I_de(S_mixer_de), .I_data(S_mixer_data),

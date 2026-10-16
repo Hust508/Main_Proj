@@ -14,6 +14,7 @@ module gt911_touch #(
     inout wire IO_scl, IO_sda, IO_int,
     output wire O_reset_n,
     output wire O_press, O_held,
+    output reg O_report_valid,
     output reg [15:0] O_x, O_y,
     output reg [3:0] O_contacts,
     output reg O_online,
@@ -30,7 +31,6 @@ module gt911_touch #(
     reg [15:0] point_x, point_y;
     wire [15:0] reg_address = (state==COORD_START || state==COORD_WAIT)
                              ? (16'h8150 + {14'd0,coord_index}) : 16'h814e;
-    reg report_valid;
     wire busy, done, error;
     wire [7:0] rdata;
     // INT is actively low only during reset/address selection/synchronization.
@@ -43,16 +43,16 @@ module gt911_touch #(
       .IO_scl(IO_scl),.IO_sda(IO_sda),.O_busy(busy),.O_done(done),
       .O_error(error),.O_rdata(rdata));
     touch_press_once #(.CLK_HZ(CLK_HZ),.RELEASE_MS(RELEASE_MS)) u_press (
-      .I_clk(I_clk),.I_rst_n(I_rst_n),.I_report_valid(report_valid),
+      .I_clk(I_clk),.I_rst_n(I_rst_n),.I_report_valid(O_report_valid),
       .I_contacts(status[3:0]),.O_press(O_press),.O_held(O_held));
     always @(posedge I_clk or negedge I_rst_n) begin
         if(!I_rst_n) begin
             state<=RESET; timer<=0; start<=0; read_op<=1;
             status<=0; coord_index<=0; point_x<=0; point_y<=0;
             O_x<=0; O_y<=0; O_contacts<=0;
-            report_valid<=0; O_online<=0; O_error_count<=0;
+            O_report_valid<=0; O_online<=0; O_error_count<=0;
         end else begin
-            start<=0; report_valid<=0;
+            start<=0; O_report_valid<=0;
             case(state)
             RESET: if(timer >= (CLK_HZ/1000)*RESET_LOW_MS-1) begin
                 timer<=0; state<=HOLD_ADDR;
@@ -111,7 +111,7 @@ module gt911_touch #(
                 end else if(status[3:0]<=5) begin
                     O_contacts<=status[3:0];
                     if(status[3:0]==1) begin O_x<=point_x; O_y<=point_y; end
-                    report_valid<=1;
+                    O_report_valid<=1;
                 end
                 timer<=0; state<=POLL_WAIT;
             end
