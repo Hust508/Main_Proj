@@ -1,8 +1,8 @@
-# Hust508 竞赛主工程 · 触屏界面版
+# Hust508 竞赛主工程 · 触屏界面与卡通风格版
 
-当前源码在 v4.0.0 三模式工程上增加上滑唤出的半透明工具栏。SC500CS 摄像头经 FPGA 处理，在 7 寸 DSI 屏全屏显示；从底部上滑后点按 **RAW / EDGE / OSD**，可选择彩色原图、黑白边缘和彩色图加水印。详细设计见 [UI 设计说明](UI_DESIGN_AND_IMPLEMENTATION.md)，展开状态见 [UI 预览图](UI_PREVIEW.svg)。
+当前源码在 v4.0.0 工程上实现上滑唤出的半透明工具栏，并增加实时卡通风格化。SC500CS 摄像头经 FPGA 处理，在 7 寸 DSI 屏全屏显示；从底部上滑后点按 **RAW / EDGE / OSD / ART**，可选择彩色原图、黑白边缘、彩色图加水印或卡通风格。设计与历史资料统一见 [界面和风格化文档](docs/ui/README.md)，展开状态见 [UI 预览图](docs/ui/UI_PREVIEW.svg)。
 
-`project/` 根目录的两个 `.bit` 随当前 UI 版本重新生成；`downloads/` 的 ZIP 仍是 v4.0.0 全屏点击循环版本。
+`project/` 根目录的两个 `.bit` 为当前工程构建产物；`downloads/` 的 ZIP 仍是 v4.0.0 全屏点击循环版本。
 
 | 入口 | 用途 |
 |---|---|
@@ -10,7 +10,7 @@
 | [project/td_project/lab_touch123_dsi_SC500_7inch.al](project/td_project/lab_touch123_dsi_SC500_7inch.al) | TD 工程入口 |
 | [新版压缩烧写文件](project/DSI_TOUCH123_SC500_7inch_compress.bit) | JTAG / SRAM 下载与上板测试 |
 | [旧版交付 ZIP](downloads/lab_touch123_DSI_SC500_7inch.zip) | 仅供回退到 v4.0.0 |
-| [上滑 UI 构建报告](project/UI_SWIPE_BUILD_REPORT.md) | 本次综合、布局布线、时序与镜像校验 |
+| [ART 构建报告](docs/ui/CARTOON_BUILD_REPORT.md) | 当前综合、布局布线、时序与镜像校验 |
 | [历史构建报告](project/BUILD_REPORT.md) | v4.0.0 验证结果 |
 | [版本索引](docs/VERSIONS.md) | 例程一、二、三与主工程的关系 |
 | [历史仓库](https://github.com/Hust508/History_Proj) | 早期独立例程 |
@@ -26,12 +26,12 @@ cd project
 ./build.ps1 -TdHome D:/Anlogic/TD
 ```
 
-Python 依赖检查：`python project/verification/check_project.py`。RTL 仿真与下载步骤见工程说明。当前 UI 源码已完成 TD 综合、布局布线和 bitstream 生成，最终 SWNS +0.002 ns、HWNS +0.020 ns。新增测试台尚未运行，实体屏幕仍需上板确认。
+Python 依赖检查：`python project/verification/check_project.py`。RTL 仿真与下载步骤见工程说明。当前四模式工程的 TD 结果见 [ART 构建报告](docs/ui/CARTOON_BUILD_REPORT.md)；实体屏幕仍需上板确认。
 
 ## 后续管理
 
 后续功能在本仓库开分支开发，经 Pull Request 合入 `main`。可复现的阶段版本打 Git tag；更新功能时同步更新 README、验证结果和版本索引。具体约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-`downloads/` 保存原始交付 ZIP，校验值见 [versions.json](versions.json)。`project/BUILD_REPORT.md` 和 `project/UI_BUILD_REPORT.md` 分别为 v4.0.0 与固定底栏的历史记录；本次状态以 [上滑 UI 构建报告](project/UI_SWIPE_BUILD_REPORT.md) 为准。
+`downloads/` 保存原始交付 ZIP，校验值见 [versions.json](versions.json)。`project/BUILD_REPORT.md`、[固定底栏报告](docs/ui/UI_BUILD_REPORT.md)和[上滑 UI 报告](docs/ui/UI_SWIPE_BUILD_REPORT.md)均为历史记录；当前状态以 [ART 构建报告](docs/ui/CARTOON_BUILD_REPORT.md) 为准。
 
 原代码与厂商 IP 的版权及使用限制继续适用。

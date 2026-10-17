@@ -13,7 +13,7 @@
 | 收起 | 菜单显示时，从 `y<=520` 起向下滑至少 80 像素，或轻点面板外的视频区；最后一次操作后约 3 秒自动收起。 |
 | 防误触 | 多指、越界、长拖动、滑过按键和短暂松手抖动都不产生模式命令。 |
 
-三个按键均位于 `y=[495,580)`：RAW `x=[24,312)`；EDGE `x=[364,660)`；OSD `x=[712,1000)`。框内文字为 RAW / EDGE / OSD。界面展开状态见 [UI_PREVIEW.svg](UI_PREVIEW.svg)；图像区域只是示意，实际来自摄像头。
+当前四个按键均位于 `y=[495,580)`：RAW `x=[16,244)`；EDGE `x=[268,496)`；OSD `x=[520,748)`；ART `x=[772,1000)`。ART 为卡通风格，具体算法见 [图像风格化设计](CARTOON_STYLE_DESIGN.md)。界面展开状态见 [UI_PREVIEW.svg](UI_PREVIEW.svg)；图像区域只是示意，实际来自摄像头。原上滑 UI 实现于 2026-10-16，ART 按键于 2026-10-17 增加。
 
 ## 数据路径
 
@@ -37,13 +37,13 @@ touch_ui_controller：坐标方向变换、手势/点击互斥、释放消抖、
 
 | 路径 | 用途 |
 |---|---|
-| `project/user_source/hdl_source/touch/gt911_touch.v` | 连续坐标及有效报告 |
-| `project/user_source/hdl_source/touch/touch_ui_controller.v` | 手势、按键命令、菜单状态 |
-| `project/user_source/hdl_source/touch/touch_mode_select.v` | 三个按键的区域解码 |
-| `project/user_source/hdl_source/osd/dsi_menu_overlay.v` | 视频透传、半透明工具栏、模式高亮 |
-| `project/verification/touch_ui_tb.sv` | 唤出/收起、点击、拖动、多指、超时测试 |
-| `project/verification/menu_tb.sv` | 全帧像素透传、混合、边界测试 |
+| `../../project/user_source/hdl_source/touch/gt911_touch.v` | 连续坐标及有效报告 |
+| `../../project/user_source/hdl_source/touch/touch_ui_controller.v` | 手势、按键命令、菜单状态 |
+| `../../project/user_source/hdl_source/touch/touch_mode_select.v` | 四个按键的区域解码 |
+| `../../project/user_source/hdl_source/osd/dsi_menu_overlay.v` | 视频透传、半透明工具栏、模式高亮 |
+| `../../project/verification/touch_ui_tb.sv` | 唤出/收起、点击、拖动、多指、超时测试 |
+| `../../project/verification/menu_tb.sv` | 全帧像素透传、混合、边界测试 |
 
-TD 的 `.al` 和 `syn_1` / `phy_1` 工程配置已登记新增模块。静态时序与镜像校验以 [上滑 UI 构建报告](project/UI_SWIPE_BUILD_REPORT.md) 为准。测试台已加入 `project/verification/run_sim.ps1`；本机当前没有可用的 Vivado/Verilog 仿真器，实体触摸方向和画面仍需上板确认。上板时先测试三个按钮中心，再测试滑动边界、长按、多指与自动收起。
+TD 的 `.al` 和 `syn_1` / `phy_1` 工程配置已登记新增模块。原上滑 UI 的静态时序与镜像校验见 [历史构建报告](UI_SWIPE_BUILD_REPORT.md)；当前四模式结果见 [ART 构建报告](CARTOON_BUILD_REPORT.md)。测试台已加入 `../../project/verification/run_sim.ps1`；实体触摸方向和画面仍需上板确认。上板时先测试四个按钮中心，再测试滑动边界、长按、多指与自动收起。
 
-资料：本地 `D:/FPGA/Reference_Manuals` 中的米联客 7 寸 MIPI 屏手册、SC500CS 数据手册；[工程说明](project/README.md)；[Goodix GT911 Programming Guide](https://www.lcd-module.de/fileadmin/eng/pdf/zubehoer/GT911_Programming_Guide_Rev.10.pdf)。
+资料：本地 `D:/FPGA/Reference_Manuals` 中的米联客 7 寸 MIPI 屏手册、SC500CS 数据手册；[工程说明](../../project/README.md)；[Goodix GT911 Programming Guide](https://www.lcd-module.de/fileadmin/eng/pdf/zubehoer/GT911_Programming_Guide_Rev.10.pdf)。

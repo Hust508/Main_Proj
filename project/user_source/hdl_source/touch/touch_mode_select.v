@@ -20,9 +20,10 @@ module touch_mode_select #(
         O_valid=0;
         O_mode=0;
         if(I_press && I_contacts==1 && in_bounds && y>=16'd495 && y<16'd580) begin
-            if(x>=16'd24 && x<16'd312) begin O_valid=1; O_mode=0; end
-            else if(x>=16'd364 && x<16'd660) begin O_valid=1; O_mode=1; end
-            else if(x>=16'd712 && x<16'd1000) begin O_valid=1; O_mode=2; end
+            if(x>=16'd16 && x<16'd244) begin O_valid=1; O_mode=0; end
+            else if(x>=16'd268 && x<16'd496) begin O_valid=1; O_mode=1; end
+            else if(x>=16'd520 && x<16'd748) begin O_valid=1; O_mode=2; end
+            else if(x>=16'd772 && x<16'd1000) begin O_valid=1; O_mode=3; end
         end
     end
 endmodule

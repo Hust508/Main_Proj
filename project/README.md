@@ -1,8 +1,8 @@
-# 例程一、二、三：7 寸屏触摸按键界面
+# 四模式摄像头处理：7 寸屏触摸按键界面
 
 默认上电显示**例程一：摄像头彩色原图**，工具栏隐藏，画面仍按既有 1024×600 中心裁剪全屏显示。单指从底部 `y>=500` 向上滑动至少 100 像素并松开，唤出底部 150 像素高的半透明工具栏，再点击对应功能：
 
-**RAW（彩色原图） / EDGE（黑白边缘检测） / OSD（彩色原图 + Logo、文字及帧计数）**。面板在 `y=450..599` 覆盖视频，背景和按钮与视频各按 50% 混合；文字保持清晰。视频不缩放，选中状态对应实际显示的模式。按键详细坐标和结构见 [UI 设计说明](../UI_DESIGN_AND_IMPLEMENTATION.md)。
+**RAW（彩色原图） / EDGE（黑白边缘检测） / OSD（彩色原图 + Logo、文字及帧计数） / ART（卡通风格）**。面板在 `y=450..599` 覆盖视频，背景和按钮与视频各按 50% 混合；文字保持清晰。视频不缩放，选中状态对应实际显示的模式。按键详细坐标和结构见 [UI 设计说明](../docs/ui/UI_DESIGN_AND_IMPLEMENTATION.md)，算法见 [卡通风格设计](../docs/ui/CARTOON_STYLE_DESIGN.md)。
 
 按键需在相同区域按下、松开且移动不超过 20 像素才生效。上滑本身不会切换模式；多指、长拖动及按键间隙不切换。菜单内向下滑动至少 80 像素或轻点外部视频区可关闭，最后一次操作约 3 秒后自动收起。松手约 30 ms 后才处理一次操作；复位回到 RAW 并隐藏菜单。
 
@@ -10,10 +10,10 @@
 
 1. 打开当前 `project/td_project/lab_touch123_dsi_SC500_7inch.al` 工程；不要使用 `downloads/` 中的旧版 ZIP。
 2. 保持已使用的 SC500CS 摄像头接 CSI、米联客 7 寸屏接 DSI 的连接。触摸信号已在同一根 40-pin 屏幕排线中，不需要额外飞线。
-3. 用 BitWriter 选择 **PH1P35MDG324**，JTAG/SRAM 下载根目录的 **`DSI_TOUCH123_SC500_7inch_compress.bit`**。该文件已从本次通过时序检查的 TD 构建复制；镜像 SHA-256 见 `UI_SWIPE_BUILD_REPORT.md`。建议断电接线、重新上电后首次测试。
-4. 等待正常显示后，从屏幕底部上滑唤出工具栏，分别点按 RAW / EDGE / OSD，确认三种画面和选中高亮。向下滑动、轻点视频区及约 3 秒无操作应收起菜单。
+3. 用 BitWriter 选择 **PH1P35MDG324**，JTAG/SRAM 下载根目录的 **`DSI_TOUCH123_SC500_7inch_compress.bit`**。镜像 SHA-256 与 TD 时序结果见 [ART 构建报告](../docs/ui/CARTOON_BUILD_REPORT.md)。建议断电接线、重新上电后首次测试。
+4. 等待正常显示后，从屏幕底部上滑唤出工具栏，分别点按 RAW / EDGE / OSD / ART，确认四种画面和选中高亮。向下滑动、轻点视频区及约 3 秒无操作应收起菜单。
 
-当前普通与压缩 `.bit` 均来自本次 UI 构建。TD 综合、布局布线和最终时序通过；新增测试台尚未运行，也未连接实体触摸屏。旧版镜像仍保存在 `downloads/` 原始 ZIP 内。
+当前普通与压缩 `.bit` 的构建状态见 [ART 构建报告](../docs/ui/CARTOON_BUILD_REPORT.md)。实体摄像头、屏幕与触摸仍需上板确认。旧版镜像仍保存在 `downloads/` 原始 ZIP 内。
 
 ## 功能与原例程的对应关系
 
@@ -22,8 +22,9 @@
 | 例程一 / 内部值 0 | 彩色实时摄像头 | 保留原始白平衡 RGB 像素，不显示 OSD |
 | 例程二 / 内部值 1 | 黑白边缘 | 逐字节保留所提供最终例程二的 `edge_detect_96.v`；阈值默认 80 |
 | 例程三 / 内部值 2 | 彩色实时图 + OSD | 使用最终例程三的 Logo、字模、黄色“安路 CNT:”和六位显示帧计数 |
+| ART / 内部值 3 | 卡通风格实时图 | RGB 每通道四级量化，叠加复用 Sobel 结果的深色轮廓 |
 
-三个模式共享一个摄像头、DDR 和 DSI 工程，无需重新下载、重新初始化屏幕或切换三个顶层。摄像头仍采集 1280×720，显示中心裁剪的 1024×600。DSI 时序、初始化 ROM、摄像头配置、DDR IP 和 Logo 数据保持原样。
+四个模式共享一个摄像头、DDR 和 DSI 工程，无需重新下载、重新初始化屏幕或切换顶层。摄像头仍采集 1280×720，显示中心裁剪的 1024×600。DSI 时序、初始化 ROM、摄像头配置、DDR IP 和 Logo 数据保持原样。
 
 KEY1 复位；KEY2/KEY3 沿用原例程的摄像头增益减/加。OSD 计数在所有模式下持续统计显示帧，因此切回例程三时会继续显示计数；它不是秒数。
 
@@ -65,7 +66,7 @@ I²C 使用系统 25 MHz 时钟，目标不超过 100 kHz；实现留出输入�
 ./build.ps1 -TdHome D:/Anlogic/TD
 ```
 
-构建脚本检查本次 bitstream 的时间及建立/保持时序，检查通过后才复制为根目录下载文件。本次结果见 `UI_SWIPE_BUILD_REPORT.md`；`BUILD_REPORT.md` 与 `UI_BUILD_REPORT.md` 对应旧版构建。
+构建脚本检查本次 bitstream 的时间及建立/保持时序，检查通过后才复制为根目录下载文件。本次结果见 [ART 构建报告](../docs/ui/CARTOON_BUILD_REPORT.md)；`BUILD_REPORT.md`、[固定底栏报告](../docs/ui/UI_BUILD_REPORT.md)与[上滑 UI 报告](../docs/ui/UI_SWIPE_BUILD_REPORT.md)对应旧版构建。
 
 | 主要文件 | 用途 |
 |---|---|
@@ -75,7 +76,8 @@ I²C 使用系统 25 MHz 时钟，目标不超过 100 kHz；实现留出输入�
 | `touch/i2c_reg16_byte.v` | 16-bit 寄存器地址、单字节读写、重复 START、ACK、超时恢复 |
 | `touch/touch_press_once.v` | 一次按下只产生一次事件及松手抖动处理 |
 | `touch/mode_mailbox.v` | 模式请求跨系统/摄像头时钟传递 |
-| `isp/isp_frame_select_96.v` | 对齐彩色/边缘延迟，在帧开始选择模式 |
+| `isp/isp_frame_select_96.v` | 对齐彩色/边缘延迟，在帧开始选择四模式 |
+| `isp/cartoon_stylize_96.v` | RGB 四级量化与 Sobel 轮廓叠加 |
 | `video_in.v`、`video_out.v` | 保存并读取四个 DDR 帧槽对应的模式标记 |
 | `osd/dsi_osd_overlay.v` | 在例程三使能 OSD，保持所有模式相同的显示流水延迟 |
 | `osd/dsi_menu_overlay.v` | 帧同步显示/隐藏、半透明混合及实际模式高亮 |
@@ -89,7 +91,7 @@ I²C 使用系统 25 MHz 时钟，目标不超过 100 kHz；实现留出输入�
 python ./verification/check_project.py
 ```
 
-原版仿真记录覆盖触摸串行协议、长按/拖动/多指、松手抖动、I²C 异常、模式请求跨时钟、帧选择、帧槽标记、裁剪地址和动态 OSD。新的 `touch_ui_tb.sv` 与 `menu_tb.sv` 已加入脚本，覆盖手势、点击及半透明视频，但本机缺少可用的 Vivado 仿真器，尚未执行。部分测试使用 FIFO 行为桩，不能替代实际 DDR/PHY 系统仿真。TD 用于安路 FPGA 编译；Vivado 仅用作 Verilog 仿真器。
+原版仿真记录覆盖触摸串行协议、长按/拖动/多指、松手抖动、I²C 异常、模式请求跨时钟、帧选择、帧槽标记、裁剪地址和动态 OSD。`cartoon_tb.sv`、`mode_pipeline_tb.sv`、`touch_ui_tb.sv` 与 `menu_tb.sv` 已纳入仿真脚本，覆盖卡通像素、四模式选择、手势和半透明菜单。本机若缺少 Vivado 仿真器，测试仍需在可用环境执行。部分测试使用 FIFO 行为桩，不能替代实际 DDR/PHY 系统仿真。TD 用于安路 FPGA 编译；Vivado 仅用作 Verilog 仿真器。
 
 可选用 `check_project.py --ex2-zip 原例程二.zip --ex3-zip 原例程三.zip` 核对来源。验证脚本需要 Python 3.9 或更高版本。
 

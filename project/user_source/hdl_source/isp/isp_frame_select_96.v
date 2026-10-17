@@ -12,14 +12,14 @@ module isp_frame_select_96 #(
     output reg [1:0] O_frame_mode
 );
     reg [95:0] color_data;
-    wire [95:0] edge_data;
+    wire [95:0] edge_data, cartoon_data;
     wire edge_valid, edge_user, edge_last;
     reg user_d;
     always @(posedge I_clk or negedge I_rst_n) begin
         if(!I_rst_n) begin color_data<=0; O_frame_mode<=0; user_d<=0; end
         else begin
             color_data<=I_data; user_d<=I_user;
-            if(I_user && !user_d) O_frame_mode <= (I_mode<=2) ? I_mode : 2'd0;
+            if(I_user && !user_d) O_frame_mode <= I_mode;
         end
     end
     edge_detect_96 #(.IMG_WIDTH(IMG_WIDTH),.IMG_HEIGHT(IMG_HEIGHT),
@@ -27,7 +27,10 @@ module isp_frame_select_96 #(
        .I_clk(I_clk),.I_rst_n(I_rst_n),.I_tdata(I_data),.I_tvalid(I_valid),
        .I_tuser(I_user),.I_tlast(I_last),.I_tready(I_ready),.O_tready(O_ready),
        .O_tdata(edge_data),.O_tvalid(edge_valid),.O_tuser(edge_user),.O_tlast(edge_last));
-    assign O_data=(O_frame_mode==1) ? edge_data : color_data;
+    cartoon_stylize_96 u_cartoon (
+        .I_color(color_data),.I_edge(edge_data),.O_data(cartoon_data));
+    assign O_data=(O_frame_mode==1) ? edge_data :
+                  (O_frame_mode==3) ? cartoon_data : color_data;
     assign O_valid=edge_valid;
     assign O_user=edge_user;
     assign O_last=edge_last;

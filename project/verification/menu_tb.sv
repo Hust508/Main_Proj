@@ -18,27 +18,25 @@ module menu_tb;
         end
     endfunction
     function [23:0] expected(input integer px,py,input bit show,input [1:0] selected_mode);
-        integer button;
+        integer button,left_edge,right_edge;
         reg [23:0] paint;
         reg active;
         begin
             expected=24'h123456;
             if(show && py>=450) begin
-                button=3;
-                if(px>=24 && px<312) button=0;
-                else if(px>=364 && px<660) button=1;
-                else if(px>=712 && px<1000) button=2;
+                button=4;left_edge=0;right_edge=0;
+                if(px>=16 && px<244) begin button=0;left_edge=16;right_edge=244;end
+                else if(px>=268 && px<496) begin button=1;left_edge=268;right_edge=496;end
+                else if(px>=520 && px<748) begin button=2;left_edge=520;right_edge=748;end
+                else if(px>=772 && px<1000) begin button=3;left_edge=772;right_edge=1000;end
                 paint=24'h101b28;
                 if(py<454) paint=24'h38b7c9;
                 else if(py>=465 && py<470 && px>=462 && px<562)
                     paint=24'h9bdce4;
-                else if(button!=3 && py>=495 && py<580) begin
+                else if(button!=4 && py>=495 && py<580) begin
                     active=(button==selected_mode);
                     paint=active ? 24'h176b80 : 24'h273748;
-                    if(py<498 || py>=577 ||
-                       (button==0 && (px<27 || px>=309)) ||
-                       (button==1 && (px<367 || px>=657)) ||
-                       (button==2 && (px<715 || px>=997)))
+                    if(py<498 || py>=577 || px<left_edge+3 || px>=right_edge-3)
                         paint=active ? 24'h48dbec : 24'h526478;
                 end
                 expected=half_blend(24'h123456,paint);
@@ -48,10 +46,12 @@ module menu_tb;
     function is_sample(input integer px,py);
         begin
             // Chosen points exclude glyphs so the blend/borders are isolated.
-            is_sample=(px==0 || px==24 || px==27 || px==100 || px==309 ||
-                       px==312 || px==364 || px==367 || px==400 ||
-                       px==512 || px==657 || px==660 || px==712 ||
-                       px==715 || px==750 || px==997 || px==999 || px==1000) &&
+            is_sample=(px==0 || px==16 || px==19 || px==50 || px==241 ||
+                       px==244 || px==268 || px==271 || px==290 ||
+                       px==493 || px==496 || px==512 || px==520 ||
+                       px==523 || px==550 || px==745 || px==748 ||
+                       px==772 || px==775 || px==790 || px==997 ||
+                       px==999 || px==1000) &&
                       (py==0 || py==449 || py==450 || py==453 || py==454 ||
                        py==465 || py==469 || py==470 || py==494 || py==495 ||
                        py==497 || py==498 || py==510 || py==576 || py==577 ||
@@ -78,7 +78,7 @@ module menu_tb;
     end
     initial begin
         #22;rst=1;
-        for(frame=0;frame<4;frame=frame+1) begin
+        for(frame=0;frame<5;frame=frame+1) begin
             visible=(frame!=0);mode=(frame==0)?0:frame-1;
             repeat(5) @(negedge clk);
             vs=1;repeat(3) @(negedge clk);vs=0;
@@ -94,5 +94,5 @@ module menu_tb;
         $display("PASS hidden passthrough, half-alpha drawer, all modes and frame edges: %0d samples",tests);
         $finish;
     end
-    initial begin #30000000;$fatal(1,"Menu watchdog");end
+    initial begin #40000000;$fatal(1,"Menu watchdog");end
 endmodule

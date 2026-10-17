@@ -30,24 +30,25 @@ module dsi_menu_overlay (
         end
     end
 
-    reg [1:0] button;
+    reg [2:0] button;
     reg [9:0] label_x;
     reg [7:0] label_width;
     reg [7:0] char_code;
     reg [3:0] char_col, char_row;
     reg label_region;
     wire [15:0] char_bits;
-    wire selected = button==I_mode;
+    wire selected = button=={1'b0,I_mode};
     osd_char_lib u_font(.I_char(char_code),.I_row(char_row),.O_row_bits(char_bits));
 
-    // Three independent hit regions leave generous gaps to avoid wrong taps.
+    // Four independent hit regions leave gaps to avoid wrong taps.
     always @(*) begin
-        button=3; label_x=0; label_width=0; char_code=0;
+        button=4; label_x=0; label_width=0; char_code=0;
         char_col=0; char_row=0; label_region=0;
-        if(x>=24 && x<312) begin button=0; label_x=120; label_width=96; end
-        else if(x>=364 && x<660) begin button=1; label_x=448; label_width=128; end
-        else if(x>=712 && x<1000) begin button=2; label_x=808; label_width=96; end
-        if(button!=3 && x>=label_x && x<label_x+label_width && y>=520 && y<552) begin
+        if(x>=16 && x<244) begin button=0; label_x=82; label_width=96; end
+        else if(x>=268 && x<496) begin button=1; label_x=318; label_width=128; end
+        else if(x>=520 && x<748) begin button=2; label_x=586; label_width=96; end
+        else if(x>=772 && x<1000) begin button=3; label_x=838; label_width=96; end
+        if(button!=4 && x>=label_x && x<label_x+label_width && y>=520 && y<552) begin
             label_region=1;
             char_col=(x-label_x)>>1;
             char_row=(y-520)>>1;
@@ -65,6 +66,10 @@ module dsi_menu_overlay (
                 0: char_code="O"; 1: char_code="S"; 2: char_code="D";
                 default: char_code=0;
                endcase
+            3: case((x-label_x)>>5)
+                0: char_code="A"; 1: char_code="R"; 2: char_code="T";
+                default: char_code=0;
+               endcase
             endcase
         end
     end
@@ -79,12 +84,13 @@ module dsi_menu_overlay (
             if(y<454) paint_rgb=24'h38b7c9;
             else if(y>=465 && y<470 && x>=462 && x<562)
                 paint_rgb=24'h9bdce4;
-            else if(button!=3 && y>=495 && y<580) begin
+            else if(button!=4 && y>=495 && y<580) begin
                 paint_rgb=selected ? 24'h176b80 : 24'h273748;
                 if(y<498 || y>=577 ||
-                   (button==0 && (x<27 || x>=309)) ||
-                   (button==1 && (x<367 || x>=657)) ||
-                   (button==2 && (x<715 || x>=997)))
+                   (button==0 && (x<19 || x>=241)) ||
+                   (button==1 && (x<271 || x>=493)) ||
+                   (button==2 && (x<523 || x>=745)) ||
+                   (button==3 && (x<775 || x>=997)))
                     paint_rgb=selected ? 24'h48dbec : 24'h526478;
                 else if(label_region && char_bits[15-char_col])
                     text_pixel=1;

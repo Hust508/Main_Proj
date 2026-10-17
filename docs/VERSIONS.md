@@ -7,6 +7,8 @@
 | v3.0.0 | 例程三：彩色画面与 OSD | 2026-10-15 | [打开工程](https://github.com/Hust508/History_Proj/tree/main/versions/v3.0.0-example3) |
 | v4.0.0 | 触屏整合版：点按循环切换三个例程 | 2026-10-15 | [打开工程](https://github.com/Hust508/Main_Proj/tree/main/project) |
 
+当前 `Yproject` 开发分支在 v4.0.0 基础上使用上滑半透明工具栏切换 RAW、EDGE、OSD、ART 四模式；ART 为实时卡通风格。该开发状态不改写上表中的历史归档，见[当前设计与构建记录](ui/README.md)。
+
 以上版本号是本次建立 GitHub 管理时分配的阶段编号，原工程名、源码与原交付标识均保留。
 例程一原名中的 `7inch_v2` 是屏幕适配修订号，与归档编号 `v1.0.0` 含义不同。
 迁入 GitHub 的日期为 2026-10-15，未把归档提交伪装成原开发日期。

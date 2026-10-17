@@ -36,7 +36,7 @@ module touch_ui_tb;
         #22;rst=1;#1;
         if(visible!==0) $fatal(1,"Drawer must reset hidden");
         // A tap while hidden has no effect.
-        sample(1,500,530);sample(0,0,0);settle();
+        sample(1,382,530);sample(0,0,0);settle();
         if(visible || selections) $fatal(1,"Hidden button selected");
         // Horizontal movement and a multi-touch report cancel gestures.
         sample(1,500,550);sample(1,600,400);sample(0,0,0);settle();
@@ -45,13 +45,13 @@ module touch_ui_tb;
         if(visible) $fatal(1,"Multi-touch opened drawer");
         open_drawer();
         if(selections) $fatal(1,"Opening swipe selected a mode");
-        sample(1,500,535);sample(0,0,0);settle();
+        sample(1,382,535);sample(0,0,0);settle();
         if(selections!=1 || last_mode!=1 || !visible)
             $fatal(1,"EDGE tap failed");
         // A short release bounce followed by a 25-pixel move is a drag.
-        sample(1,500,535);sample(0,0,0);
+        sample(1,382,535);sample(0,0,0);
         repeat(5) @(posedge clk);
-        sample(1,500,560);sample(0,0,0);settle();
+        sample(1,382,560);sample(0,0,0);settle();
         if(selections!=1) $fatal(1,"Release bounce selected a mode");
         // Drag across buttons must not select another mode.
         sample(1,140,535);sample(1,800,535);sample(0,0,0);settle();
@@ -59,12 +59,15 @@ module touch_ui_tb;
         sample(1,500,470);sample(1,500,570);sample(0,0,0);settle();
         if(visible) $fatal(1,"Down swipe did not close drawer");
         open_drawer();
+        sample(1,886,535);sample(0,0,0);settle();
+        if(selections!=2 || last_mode!=3 || !visible)
+            $fatal(1,"ART tap failed");
         sample(1,300,100);sample(0,0,0);settle();
         if(visible) $fatal(1,"Outside tap did not close drawer");
         open_drawer();
         repeat(3010) @(posedge clk);#1;
         if(visible) $fatal(1,"Drawer did not auto-hide");
-        if(selections!=1) $fatal(1,"Unexpected selection");
+        if(selections!=2) $fatal(1,"Unexpected selection");
         $display("PASS swipe open/close, hidden passthrough, tap, drag, multi-touch and auto-hide");
         $finish;
     end
