@@ -3,7 +3,7 @@
   **** SW Build 6140274 on Thu May 22 00:12:29 MDT 2025
   **** IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
   **** SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
-  **** Start of session at: Thu Oct 15 19:27:55 2026
+  **** Start of session at: Sat Oct 17 19:07:18 2026
     ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
     ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 
@@ -11,7 +11,7 @@ source xsim.dir/crop_tb/xsim_script.tcl
 # xsim {crop_tb} -autoloadwcfg -runall
 Time resolution is 1 ps
 run -all
-PASS: full crop address coverage for all four frame buffers, stalled requests, 31-cycle returns, partial-frame restart, and 600-row bounds.
-$finish called at time : 7435890 ns : File "C:/Users/Xuan/.codex/.chatgpt-projects/g-p-6ac6609d5fac8191bbfcec16e35eed57/touch123/verification/crop_tb.sv" Line 80
+PASS full 1024x600 crop/pixel byte order with async DDR/DSI, delayed returns/stalls, 614400 exact pixels, credit-based FIFO protection, one underflow event and next-frame recovery
+$finish called at time : 46427228280 ps : File "C:/Users/Xuan/.codex/.chatgpt-projects/g-p-6ac6609d5fac8191bbfcec16e35eed57/s11/verification/crop_tb.sv" Line 60
 exit
-INFO: [Common 17-206] Exiting xsim at Thu Oct 15 19:27:58 2026...
+INFO: [Common 17-206] Exiting xsim at Sat Oct 17 19:07:25 2026...

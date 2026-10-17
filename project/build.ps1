@@ -1,8 +1,8 @@
-﻿param([string]$TdHome = 'C:\APP2\ALTD')
+param([string]$TdHome = 'C:\APP2\ALTD')
 
 $ErrorActionPreference = 'Stop'
 
-$taskProjectName = 'lab_touch123_dsi_SC500_7inch'
+$taskProjectName = 'wb_ui_dsi'
 
 $taskTdExe = Join-Path $TdHome 'bin/td_commands_prompt.exe'
 
@@ -21,18 +21,15 @@ foreach ($taskRun in @('syn_1', 'phy_1')) {
     $taskRunDir = Join-Path $PSScriptRoot "td_project/${taskProjectName}_Runs/$taskRun"
 
     $taskExtra = ''
-    $taskBefore = ''
 
     if ($taskRun -eq 'phy_1') {
 
-        $taskBefore = 'set phyWildParams {place seed 2}'
         $taskExtra = "set_param bitgen compress on`nbitgen -bit ${taskProjectName}.bit"
 
     }
 
     @"
 
-$taskBefore
 if {[catch {source {$taskFlow}} taskError]} {
 
     puts stderr `$taskError
@@ -93,11 +90,11 @@ foreach ($taskSuffix in @('', '_compress')) {
 
     }
 
-    Copy-Item -LiteralPath $taskSource -Destination (Join-Path $PSScriptRoot "DSI_TOUCH123_SC500_7inch${taskSuffix}.bit") -Force
+    Copy-Item -LiteralPath $taskSource -Destination (Join-Path $PSScriptRoot "DSI_UNIFIED_SC500_7inch${taskSuffix}.bit") -Force
 
 }
 
-Write-Host '综合、布局布线及最终时序检查完成；新镜像已复制到工程根目录。尚需实际开发板验证。'
+Write-Host '综合、布局布线及最终时序检查完成；统一版新镜像已复制到工程根目录。尚需实际开发板验证。'
 
 Write-Host '随包 BUILD_REPORT/BUILD_MANIFEST 对应原交付构建；再次编译后请以本次 TD 报告为准。'
 

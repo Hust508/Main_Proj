@@ -45,6 +45,7 @@ output reg           O_csi_frame_start, //帧起始，1个周期有效
 output reg           O_csi_frame_end,   //帧结束，1个周期有效
 output reg           O_csi_valid, //synthesis keep      //有效数据输出
 output reg           O_csi_hs,
+output reg           O_csi_line_end, // one pulse per completed RAW10 payload
 output reg  [31: 0]  O_csi_data   //synthesis keep      //有效数据，这里定义2LANE，1BYTE模式
 );
 
@@ -136,4 +137,10 @@ always @(posedge I_clk) begin
 end
 
     
+// Payload end, aligned AFTER the final O_csi_valid word. O_csi_valid
+// intentionally alternates 1/0 inside a packet and is NOT a line boundary.
+reg payload_d;
+always @(posedge I_clk or negedge I_rst_n)
+ if(!I_rst_n)begin payload_d<=0;O_csi_line_end<=0;end
+ else begin payload_d<=S_data_en;O_csi_line_end<=payload_d&&!S_data_en;end
 endmodule

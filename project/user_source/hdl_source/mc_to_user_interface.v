@@ -13,6 +13,7 @@ module mc_to_user_interface (
     input wire[24:0]    I_ddr_user_addr,
     input wire[127:0]   I_ddr_user_wr_data,
     output wire         O_ddr_user_ready,
+    output wire O_writes_idle,
     output wire         O_ddr_user_rd_valid,
     output wire[127:0]  O_ddr_user_rd_data,
 
@@ -41,6 +42,15 @@ module mc_to_user_interface (
     wire        S_fifo_rd_valid;
     wire        S_fifo_empty;   
 
+    reg [9:0] pending_writes;
+    always @(posedge I_clk or negedge I_rst_n)
+      if(!I_rst_n)pending_writes<=0;
+      else case({I_ddr_user_wr_en,O_mc_app_wdf_wren})
+        2'b10:pending_writes<=pending_writes+1'b1;
+        2'b01:pending_writes<=pending_writes-1'b1;
+        default:;
+      endcase
+    assign O_writes_idle=(pending_writes==0)&&!I_ddr_user_wr_en;
     assign S_fifo_wr_en = I_ddr_user_wr_en | I_ddr_user_rd_en;
 
     assign S_fifo_wr_data = {I_ddr_user_wr_en,I_ddr_user_rd_en,I_ddr_user_addr,I_ddr_user_wr_data};

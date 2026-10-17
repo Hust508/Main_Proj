@@ -1,227 +1,100 @@
-
-
-module video_in (
-    input wire         I_rst_n,
-
-    input wire         I_camera_clk,
-    input wire         I_camera_frame_start,
-    input wire[1:0]    I_camera_mode,
-    output reg[7:0]    O_slot_modes,
-    input wire         I_camera_valid,
-    input wire[127:0]  I_camera_data,
-    input wire         I_mipi_rx_error,
-
-    input wire         I_ddr_clk,
-
-    input wire         I_display_pause,
-    input wire         I_video_out_rd_busy,
-    output wire        O_video_in_wr_busy,
-    output reg[1:0]    O_video_out_rp,     ///读指针
-
-    output reg         O_ddr_user_wr_en,
-    output reg[24:0]   O_ddr_user_addr,
-    output wire[127:0] O_ddr_user_wr_data,
-    input wire         I_ddr_user_ready
+// Four DDR slots: front, latest complete and writer never share ownership.
+// SOF markers travel with pixels; only global reset clears the input FIFO.
+module video_in #(parameter FRAME_WORDS=172800)(
+ input wire I_rst_n,I_camera_clk,I_camera_frame_start,
+ input wire [2:0] I_camera_mode,output wire [11:0] O_slot_modes,
+ input wire I_camera_valid,input wire [127:0] I_camera_data,
+ input wire I_mipi_rx_error,I_ddr_clk,I_display_pause,I_video_out_rd_busy,
+ input wire I_display_frame_release,I_ddr_writes_idle,
+ output wire O_video_in_wr_busy,output reg [1:0] O_video_out_rp,
+ output reg O_front_valid,
+ output wire O_ddr_user_wr_en,output wire [24:0] O_ddr_user_addr,
+ output wire [127:0] O_ddr_user_wr_data,input wire I_ddr_user_ready,
+ output reg [31:0] O_dropped_frames,O_good_frames,O_fifo_overflows
 );
-
-    wire        S_fifo_rst;
-    reg         S_camera_frame_start_extend; ///脉冲展宽，同步到ddr_clk时钟域
-    reg[3:0]    S_extend_cnt;
-    reg         S_camera_frame_start_extend_1d;
-    reg         S_camera_frame_start_extend_2d;
-    reg         S_camera_frame_start_extend_3d;
-    wire        S_frame_start;
-    reg[1:0]    S_video_in_wp;       ///写指针
-    wire[8:0]   S_fifo_rd_num;      
-    wire        S_fifo_rd_en;   
-    wire        S_fifo_rd_valid;
-    wire[127:0] S_fifo_rd_data; 
-    reg         S_ddr_wr_valid;
-    reg[9:0]    S_ddr_wr_cnt;
-
-    // Bundled frame metadata precedes the synchronized frame-start pulse.
-    // It stays stable for the entire camera frame; no independently sampled
-    // mode request is used to label already-written pixels.
-    (* async_reg="true" *) reg [1:0] mode_meta, mode_sync;
-    always @(posedge I_ddr_clk or negedge I_rst_n) begin
-        if(!I_rst_n) begin mode_meta<=0; mode_sync<=0; O_slot_modes<=0; end
-        else begin
-            mode_meta<=I_camera_mode; mode_sync<=mode_meta;
-            if(S_frame_start && !I_display_pause) begin
-                if(I_mipi_rx_error)
-                    O_slot_modes[((S_video_in_wp-2'd1)&2'b11)*2 +: 2]<=mode_sync;
-                else O_slot_modes[S_video_in_wp*2 +: 2]<=mode_sync;
-            end
-        end
+ wire full,empty;wire [130:0] head;wire [9:0] used;
+ reg pending_marker,drop_camera,overflow,marker_bad;
+ reg [130:0] entry;reg push;
+ always @(*)begin
+  push=0;entry=0;
+  if(I_camera_frame_start)begin push=1;entry={I_mipi_rx_error|overflow|pending_marker,1'b1,I_camera_valid,I_camera_data};end
+  else if(pending_marker)begin push=1;entry={marker_bad,1'b1,1'b0,128'd0};end
+  else if(I_camera_valid&&!drop_camera)begin push=1;entry={1'b0,1'b0,1'b1,I_camera_data};end
+ end
+ always @(posedge I_camera_clk or negedge I_rst_n)
+ if(!I_rst_n)begin pending_marker<=0;drop_camera<=1;overflow<=0;marker_bad<=1;O_fifo_overflows<=0;end
+ else if(I_camera_frame_start)begin
+  marker_bad<=I_mipi_rx_error|overflow|pending_marker;
+  pending_marker<=full;drop_camera<=full;overflow<=full;
+  if(full)O_fifo_overflows<=O_fifo_overflows+1'b1;
+ end else if(pending_marker&&!full)pending_marker<=0;
+ else if(push&&full&&!drop_camera)begin
+  overflow<=1;drop_camera<=1;O_fifo_overflows<=O_fifo_overflows+1'b1;
+ end
+ wire pop;
+ frame_stream_fifo fifo(.rst_n(I_rst_n),.wclk(I_camera_clk),.we(push&&!full),.di(entry),.full(full),
+ .rclk(I_ddr_clk),.re(pop),.dout(head),.empty(empty),.used(used));
+ localparam SEEK=0,ALLOC=1,ACTIVE=2,CLOSE=3;
+ reg [1:0] state,writer,latest;
+ (* async_reg="true" *) reg [2:0] mode_meta,mode_sync;
+ reg [2:0] writer_mode;reg [11:0] slot_modes;
+ reg latest_valid,has_frame,bad,first_valid;
+ reg [127:0] first_data;
+ reg [17:0] words;
+ reg burst;reg [7:0] burst_count;
+ function [24:0] base(input [1:0] slot);
+ begin case(slot)0:base=0;1:base=7000000;2:base=14000000;3:base=21000000;endcase end
+ endfunction
+ reg [1:0] free_slot;integer s;
+ always @(*)begin
+  free_slot=0;
+  for(s=3;s>=0;s=s-1)
+   if((!O_front_valid||s!=O_video_out_rp)&&(!latest_valid||s!=latest))free_slot=s;
+ end
+ wire marker=!empty&&head[129];
+ wire payload=first_valid||(!empty&&!marker&&head[128]);
+ assign O_video_in_wr_busy=burst;
+ assign O_ddr_user_wr_en=state==ACTIVE&&burst&&payload&&words<FRAME_WORDS&&I_ddr_user_ready;
+ assign O_ddr_user_wr_data=first_valid?first_data:head[127:0];
+ assign O_ddr_user_addr=base(writer)+{4'd0,words,3'b000};
+ assign O_slot_modes=slot_modes;
+ assign pop=(state==SEEK&&!empty)||(state==CLOSE&&!empty&&I_ddr_writes_idle)||
+   (state==ACTIVE&&!first_valid&&!empty&&!marker&&
+    ((head[128]&&words<FRAME_WORDS)?O_ddr_user_wr_en:1'b1));
+ always @(posedge I_ddr_clk or negedge I_rst_n)
+ if(!I_rst_n)begin
+  state<=SEEK;writer<=0;latest<=0;latest_valid<=0;O_video_out_rp<=0;O_front_valid<=0;
+  mode_meta<=0;mode_sync<=0;writer_mode<=0;slot_modes<=0;
+  has_frame<=0;bad<=0;words<=0;first_valid<=0;first_data<=0;burst<=0;burst_count<=0;
+  O_dropped_frames<=0;O_good_frames<=0;
+ end else begin
+  mode_meta<=I_camera_mode;mode_sync<=mode_meta;
+  if(I_display_frame_release&&!I_display_pause&&latest_valid)begin
+   O_video_out_rp<=latest;O_front_valid<=1;latest_valid<=0;
+  end
+  case(state)
+   SEEK:if(marker)begin first_valid<=head[128];first_data<=head[127:0];state<=ALLOC;end
+   ALLOC:begin writer<=free_slot;writer_mode<=mode_sync;words<=0;bad<=0;has_frame<=1;state<=ACTIVE;end
+   ACTIVE:begin
+    if(marker&&!first_valid)begin burst<=0;state<=CLOSE;end
+    else begin
+     if(!burst&&!I_video_out_rd_busy&&payload)begin burst<=1;burst_count<=0;end
+     if(burst&&(!payload||words>=FRAME_WORDS))burst<=0;
+     if(O_ddr_user_wr_en)begin
+      words<=words+1'b1;first_valid<=0;
+      if(burst_count==127)burst<=0;else burst_count<=burst_count+1'b1;
+     end
+     if(pop&&head[128]&&words>=FRAME_WORDS)bad<=1;
     end
-
-    localparam IMAGE_BASE_ADDR_0 = 25'd0;
-    localparam IMAGE_BASE_ADDR_1 = 25'd7000000;
-    localparam IMAGE_BASE_ADDR_2 = 25'd14000000;
-    localparam IMAGE_BASE_ADDR_3 = 25'd21000000;
-
-
-    assign S_fifo_rst = S_camera_frame_start_extend_3d;
-
-    // S_ddr_wr_valid is the ownership flag for the complete DDR write burst.
-    // O_ddr_user_wr_en is registered one cycle after S_fifo_rd_en; including it
-    // here bridges the only idle cycle between consecutive 240-beat bursts.
-    // With a continuous 1080p stream that kept wr_busy permanently asserted and
-    // starved video_out, so no DDR read request could ever start.
-    assign O_video_in_wr_busy = S_ddr_wr_valid;
-
-    w128_d512_fifo U_w128_d512_fifo(
-        .rst        ( S_fifo_rst         ),   
-
-        .clkw       ( I_camera_clk       ),     
-        .we         ( I_camera_valid     ),
-        .di         ( I_camera_data      ),
-        .afull      (),
-        .full_flag  (),
-        .wrusedw    (),
- 
-        .clkr       ( I_ddr_clk          ),
-        .re         ( S_fifo_rd_en       ), 
-        .dout       ( O_ddr_user_wr_data ),  
-        .rdusedw    ( S_fifo_rd_num      ),
-        .valid      (), 
-        .empty_flag (),
-        .aempty     ()
-    );
-
-
-    always @(posedge I_camera_clk or negedge I_rst_n) begin
-        if(!I_rst_n)
-            S_camera_frame_start_extend <= 1'b0;
-        else
-            if(I_camera_frame_start)
-                S_camera_frame_start_extend <= 1'b1;
-            else if(S_extend_cnt == 'd7)
-                S_camera_frame_start_extend <= 1'b0;
-            else
-                S_camera_frame_start_extend <= S_camera_frame_start_extend;
-    end
-
-	
-    always @ (posedge I_camera_clk) begin
-    	if(S_camera_frame_start_extend)
-        	S_extend_cnt <= S_extend_cnt + 'd1;
-      	else
-          	S_extend_cnt <= 'd0;
-    end
-
-
-    always @(posedge I_ddr_clk) begin
-        S_camera_frame_start_extend_1d <= S_camera_frame_start_extend;
-        S_camera_frame_start_extend_2d <= S_camera_frame_start_extend_1d;
-        S_camera_frame_start_extend_3d <= S_camera_frame_start_extend_2d;
-    end
-
-    assign S_frame_start = ~S_camera_frame_start_extend_3d & S_camera_frame_start_extend_2d;
-
-	/*
-		如果前一帧图像有误少行了，那么地址回退为之前的，覆盖有问题的那帧图像
-	*/
-    always @(posedge I_ddr_clk or negedge I_rst_n) begin
-        if(!I_rst_n)
-            S_video_in_wp <= 'd0;
-        else
-            if(I_display_pause)
-                S_video_in_wp <= S_video_in_wp;
-            else if(S_frame_start)
-                begin
-                    if(I_mipi_rx_error)
-                        S_video_in_wp <= S_video_in_wp;
-                    else
-                        S_video_in_wp <= S_video_in_wp + 'd1;
-                end
-            else
-                S_video_in_wp <= S_video_in_wp;
-    end
-
-
-    always @(posedge I_ddr_clk or negedge I_rst_n) begin
-        if(!I_rst_n)
-            O_video_out_rp <= 'd0;
-        else
-            if(I_display_pause)
-                O_video_out_rp <= O_video_out_rp;
-            else if(S_frame_start)
-                begin
-                    case(S_video_in_wp)
-                        'd0: O_video_out_rp <= 'd2;
-                        'd1: O_video_out_rp <= 'd3;
-                        'd2: O_video_out_rp <= 'd0;
-                        'd3: O_video_out_rp <= 'd1;
-                    endcase
-                end
-            else
-                O_video_out_rp <= O_video_out_rp;
-    end
-
-    /*
-        fifo的深度是512，实际的深度是510，因此需要注意每次读出的长度避免为256，否则连续两次读写会引起fifo读空，丢失数据
-    */
-    always @(posedge I_ddr_clk or negedge I_rst_n) begin
-        if(!I_rst_n)
-            S_ddr_wr_valid <= 1'b0;
-        else
-            if(S_ddr_wr_valid && I_ddr_user_ready && S_ddr_wr_cnt == 'd239)
-                S_ddr_wr_valid <= 1'b0;
-            else if(S_fifo_rd_num >= 'd240 && (!I_video_out_rd_busy) && (!S_fifo_rst))
-                S_ddr_wr_valid <= 1'b1;
-            else
-                S_ddr_wr_valid <= S_ddr_wr_valid;
-    end
-
-    always @(posedge I_ddr_clk) begin
-        if(S_ddr_wr_valid)
-            begin
-                if(I_ddr_user_ready)
-                    S_ddr_wr_cnt <= S_ddr_wr_cnt + 'd1;
-                else
-                    S_ddr_wr_cnt <= S_ddr_wr_cnt;
-            end
-        else
-            S_ddr_wr_cnt <= 'd0;
-    end
-
-    assign S_fifo_rd_en = S_ddr_wr_valid & I_ddr_user_ready;
-
-    always @(posedge I_ddr_clk) begin
-        O_ddr_user_wr_en <= S_fifo_rd_en;
-    end
-
-	/*
-		如果前一帧图像有误少行了，那么地址回退为之前的，覆盖有问题的那帧图像
-	*/
-    always @(posedge I_ddr_clk or negedge I_rst_n) begin
-        if(!I_rst_n)
-            O_ddr_user_addr <= 1'b0;
-        else
-            if(S_frame_start && (!I_mipi_rx_error))
-                begin
-                    case(S_video_in_wp)
-                        'd0: O_ddr_user_addr <= IMAGE_BASE_ADDR_0;
-                        'd1: O_ddr_user_addr <= IMAGE_BASE_ADDR_1;
-                        'd2: O_ddr_user_addr <= IMAGE_BASE_ADDR_2;
-                        'd3: O_ddr_user_addr <= IMAGE_BASE_ADDR_3;
-                    endcase
-                end
-			else if(S_frame_start && I_mipi_rx_error)
-				begin
-                	case(S_video_in_wp)
-                        'd0: O_ddr_user_addr <= IMAGE_BASE_ADDR_3;
-                        'd1: O_ddr_user_addr <= IMAGE_BASE_ADDR_0;
-                        'd2: O_ddr_user_addr <= IMAGE_BASE_ADDR_1;
-                        'd3: O_ddr_user_addr <= IMAGE_BASE_ADDR_2;
-                    endcase
-                end
-            else if(O_ddr_user_wr_en)
-                O_ddr_user_addr <= O_ddr_user_addr + 'd8;
-            else    
-                O_ddr_user_addr <= O_ddr_user_addr;
-    end
-
-    
+   end
+   CLOSE:if(I_ddr_writes_idle&&!empty)begin
+    // All writes have reached the controller before publishing this slot.
+    if(has_frame&&words==FRAME_WORDS&&!bad&&!head[130])begin
+     latest<=writer;latest_valid<=1;slot_modes[writer*3 +: 3]<=writer_mode;
+     O_good_frames<=O_good_frames+1'b1;
+    end else O_dropped_frames<=O_dropped_frames+1'b1;
+    first_valid<=head[128];first_data<=head[127:0];state<=ALLOC;
+   end
+  endcase
+ end
 endmodule

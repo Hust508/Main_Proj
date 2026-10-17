@@ -7,14 +7,14 @@
 | v3.0.0 | 例程三：彩色画面与 OSD | 2026-10-15 | [打开工程](https://github.com/Hust508/History_Proj/tree/main/versions/v3.0.0-example3) |
 | v4.0.0 | 触屏整合版：点按循环切换三个例程 | 2026-10-15 | [打开工程](https://github.com/Hust508/Main_Proj/tree/main/project) |
 
-当前 `Yproject` 开发分支在 v4.0.0 基础上使用上滑半透明工具栏切换 RAW、EDGE、OSD、ART 四模式；ART 为实时卡通风格。该开发状态不改写上表中的历史归档，见[当前设计与构建记录](ui/README.md)。
+当前统一版已合并 Hproject 的长按白平衡 UI、六种滤镜和 RGB 单目标形状功能，并替代原 Yproject 上滑工具栏。该开发状态不改写上表中的历史归档，见[统一版设计与开发记录](latest/README.md)。
 
 以上版本号是本次建立 GitHub 管理时分配的阶段编号，原工程名、源码与原交付标识均保留。
 例程一原名中的 `7inch_v2` 是屏幕适配修订号，与归档编号 `v1.0.0` 含义不同。
 迁入 GitHub 的日期为 2026-10-15，未把归档提交伪装成原开发日期。
 
 `Main_Proj` 用于后续开发；`History_Proj` 按版本目录保留三个独立例程，不在历史目录直接开展新功能。
-原始 ZIP 在各仓库 `downloads/`，精确 SHA-256 见 `versions.json`。
+原始 ZIP 在各仓库 `downloads/`，本仓库阶段包的精确 SHA-256 见根目录 `SHA256SUMS`。
 所有工程保留原 README、构建报告、验证脚本及交付镜像；工程内部不做代码或路径改写。
 
 原代码及厂商 IP 的版权、加密和使用限制继续适用；本次整理不新增开源许可证。

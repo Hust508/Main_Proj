@@ -8,8 +8,10 @@ module video_out (
     output wire       O_video_out_rd_busy,  
     input wire        I_video_in_wr_busy,   
     input wire[1:0]   I_video_out_rp,
-    input wire[7:0]   I_slot_modes,
-    output reg[1:0]   O_frame_mode,
+    input wire I_front_valid,output wire O_frame_release,
+    output reg [31:0] O_underflow_frames,O_overflow_frames,
+    input wire[11:0]   I_slot_modes,
+    output reg[2:0]   O_frame_mode,
     output wire       O_ddr_user_rd_en,
     output reg[24:0]  O_ddr_user_addr,
     input wire        I_ddr_user_ready,
@@ -22,6 +24,7 @@ module video_out (
     output reg[23:0]  O_vdieo_data
 );
 
+    wire S_video_frame_start;
     localparam CROP_OFFSET = 25'd115392; // ((60*1280+128)*3)/2
     localparam ROW_SKIP = 25'd384; // (1280-1024)*3/2, in 16-bit address units
     reg [7:0] S_crop_word;
@@ -31,6 +34,15 @@ module video_out (
     reg S_frame_ready;
     reg         S_fifo_rst;     
     wire S_flush_start = S_frame_pending && (S_outstanding_reads == 0) && !S_fifo_rst;
+    assign O_frame_release=S_flush_start;
+    wire S_fifo_full;
+    reg overflow_seen;
+    always @(posedge I_ddr_clk or negedge I_rst_n)
+    if(!I_rst_n)begin O_overflow_frames<=0;overflow_seen<=0;end
+    else if(S_video_frame_start)overflow_seen<=0;
+    else if(I_ddr_user_rd_valid&&S_fifo_full&&!overflow_seen)begin
+      O_overflow_frames<=O_overflow_frames+1'b1;overflow_seen<=1;
+    end
     reg[7:0]    S_fifo_rst_cnt;
     wire[8:0]   S_fifo_wr_num;       
     wire        S_fifo_rd_en;        
@@ -38,7 +50,7 @@ module video_out (
     reg         S_video_vsync_1d;
     reg         S_video_vsync_2d;
     reg         S_video_vsync_3d;
-    wire        S_video_frame_start;   
+   
     wire        S_ddr_rd_trig;       
     reg         S_ddr_rd_valid;      
     reg[9:0]    S_ddr_rd_cnt;        
@@ -53,7 +65,7 @@ module video_out (
     // Capture the selected slot's mode on the same edge as its read address.
     always @(posedge I_ddr_clk or negedge I_rst_n) begin
         if(!I_rst_n) O_frame_mode<=0;
-        else if(S_video_frame_start) O_frame_mode<=I_slot_modes[I_video_out_rp*2 +: 2];
+        else if(S_video_frame_start) O_frame_mode<=I_slot_modes[I_video_out_rp*3 +: 3];
     end
 
     localparam IMAGE_BASE_ADDR_0 = 25'd0;
@@ -96,7 +108,7 @@ module video_out (
             end else if (S_fifo_rst) begin
                 if (S_fifo_rst_cnt == 8'd10) begin
                     S_fifo_rst <= 0;
-                    S_frame_ready <= 1;
+                    S_frame_ready <= I_front_valid;
                 end else S_fifo_rst_cnt <= S_fifo_rst_cnt + 1'b1;
             end
         end
@@ -106,7 +118,7 @@ module video_out (
         这里需要注意fifo的剩余空间一定要大于将要写入的长度，因为ddr读出的时候会有至少40个时钟周期的延时，
         例如每次从ddr读出240个长度的数据，那么fifo的剩余空间最少要设为280，否则会引起fifo写满丢失数据。
     */
-    assign S_ddr_rd_trig = (('d511 - S_fifo_wr_num) >= 'd300) && (!I_video_in_wr_busy) && (!S_ddr_rd_valid) && (!S_fifo_rst) && I_rst_n && S_frame_ready && !S_video_frame_start && (S_crop_row < 600) ? 1'b1 : 1'b0;
+    assign S_ddr_rd_trig = (({2'd0,S_fifo_wr_num}+{1'b0,S_outstanding_reads}) <= 11'd304) && (!I_video_in_wr_busy) && (!S_ddr_rd_valid) && (!S_fifo_rst) && I_rst_n && S_frame_ready && !S_video_frame_start && (S_crop_row < 600) ? 1'b1 : 1'b0;
 
     /*
         fifo的深度是512，实际的深度是510，因此需要注意每次读出的长度避免为256，否则连续两次写入会引起fifo写满，丢失数据
@@ -142,7 +154,7 @@ module video_out (
         if(!I_rst_n)
             O_ddr_user_addr <= 'd0;
         else
-            if(S_video_frame_start)
+            if(S_fifo_rst&&S_fifo_rst_cnt==8'd10)
                 begin
                     case(I_video_out_rp)
                         'd0: O_ddr_user_addr <= IMAGE_BASE_ADDR_0 + CROP_OFFSET;
@@ -174,14 +186,14 @@ module video_out (
 
 
     w128_d512_fifo U_w128_d512_fifo(
-        .rst        ( S_fifo_rst          ),   
+        .rst        ( S_fifo_rst | !I_rst_n ),   
 
         .clkw       ( I_ddr_clk           ),     
-        .we         ( I_ddr_user_rd_valid ),
+        .we         ( I_ddr_user_rd_valid && !S_fifo_full && !S_fifo_rst ),
         .di         ( I_ddr_user_rd_data  ),
         .wrusedw    ( S_fifo_wr_num       ),
         .afull      (),
-        .full_flag  (),
+        .full_flag  (S_fifo_full),
  
         .clkr       ( I_dsi_clk           ),
         .re         ( S_fifo_rd_en        ), 
@@ -194,15 +206,27 @@ module video_out (
 
 
    always @(posedge I_dsi_clk) begin
-       if(I_video_rd_en)
+       if(!I_rst_n)S_fifo_rd_cnt<=0;
+       else if(I_video_rd_en)
            S_fifo_rd_cnt <= S_fifo_rd_cnt + 'd1;
        else
            S_fifo_rd_cnt <= 'd0;
    end
 
-   assign S_fifo_rd_en = I_video_rd_en && (S_fifo_rd_cnt == 'd0)  ? 1'b1 :
-                         I_video_rd_en && (S_fifo_rd_cnt == 'd5)  ? 1'b1 :
-                         I_video_rd_en && (S_fifo_rd_cnt == 'd10) ? 1'b1 : 1'b0;
+   wire need_word=I_video_rd_en&&(S_fifo_rd_cnt==0||S_fifo_rd_cnt==5||S_fifo_rd_cnt==10);
+   (* async_reg="true" *) reg [1:0] front_sync;
+   reg vs_d,underflow,read_fault_d;
+   reg [23:0] last_good;
+   wire miss=need_word&&S_fifo_emtpy&&front_sync[1];
+   always @(posedge I_dsi_clk or negedge I_rst_n)
+   if(!I_rst_n)begin front_sync<=0;vs_d<=0;underflow<=0;O_underflow_frames<=0;read_fault_d<=0;end
+   else begin
+     front_sync<={front_sync[0],I_front_valid};vs_d<=I_video_vsync;
+     read_fault_d<=underflow||miss||!front_sync[1];
+     if(I_video_vsync&&!vs_d)underflow<=0;
+     else if(miss&&!underflow)begin underflow<=1;O_underflow_frames<=O_underflow_frames+1'b1;end
+   end
+   assign S_fifo_rd_en=need_word&&!S_fifo_emtpy&&!underflow&&front_sync[1];
 
    always @(posedge I_dsi_clk) begin
        S_video_rd_en_1d  <= I_video_rd_en;
@@ -211,8 +235,11 @@ module video_out (
    end
 
    always @(posedge I_dsi_clk) begin
-       if(S_video_rd_en_1d)
+       if(!I_rst_n)begin O_vdieo_data<=0;last_good<=0;end
+       else if(S_video_rd_en_1d&&read_fault_d)O_vdieo_data<=last_good;
+       else if(S_video_rd_en_1d)
            begin
+               last_good<=O_vdieo_data;
                case(S_fifo_rd_cnt_1d)
                    'd0: O_vdieo_data  <= S_fifo_rd_data[127:104];
                    'd1: O_vdieo_data  <= S_fifo_rd_data[103:80];

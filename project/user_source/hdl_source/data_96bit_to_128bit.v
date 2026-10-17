@@ -21,15 +21,20 @@ module data_96bit_to_128bit (
 
 
     always @(posedge I_clk) begin
+      if(!I_rst_n)begin S_96b_valid_1d<=0;S_96b_data_1d<=0;O_128b_frame_start<=0;end
+      else begin
         S_96b_valid_1d <= I_96b_valid;
         S_96b_data_1d  <= I_96b_data;
 
 		O_128b_frame_start <= I_96b_frame_start;
+      end
     end
 
 
     always @(posedge I_clk) begin
-        if(I_96b_valid)
+        if(!I_rst_n)S_cnt<=0;
+        else if(I_96b_frame_start)S_cnt<=I_96b_valid?2'd1:2'd0;
+        else if(I_96b_valid)
             S_cnt <= S_cnt + 'd1;
         else
             S_cnt <= 'd0;
@@ -37,9 +42,10 @@ module data_96bit_to_128bit (
 
 
     always @(posedge I_clk) begin
-        if(I_96b_valid)
+        if(!I_rst_n)begin O_128b_valid<=0;O_128b_data<=0;end
+        else if(I_96b_valid)
             begin
-                case(S_cnt)
+                case(I_96b_frame_start?2'd0:S_cnt)
                     'd0 : 
                         begin
                             O_128b_valid <= 1'b0;

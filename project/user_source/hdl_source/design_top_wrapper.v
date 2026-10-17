@@ -2,13 +2,9 @@
 
 module design_top_wrapper #(
     parameter DISPLAY_TEST_PATTERN = 0, // 0: camera; 1: vendor generated test pattern
-    parameter OSD_ENABLE = 1,
-    parameter EDGE_THRESHOLD = 14'd80,
-    parameter OSD_LOGO_X = 0,
-    parameter OSD_LOGO_Y = 0,
-    parameter OSD_TEXT_X = 375,
-    parameter OSD_TEXT_Y = 120,
-    parameter [23:0] OSD_TEXT_COLOR = 24'hfff200
+    parameter TOUCH_AUTO_SWAP = 1,
+    parameter TOUCH_INVERT_X = 0,
+    parameter TOUCH_INVERT_Y = 0
 ) (
     input wire        I_sys_clk,
     input wire        I_rst_n,
@@ -243,58 +239,58 @@ module design_top_wrapper #(
     // continuous backlight enable, and a 10 ms settling time at 10 MHz.
     // No panel-specific reset pulse duration is supplied; do not invent one.
     // FFC pin 33 is TP-RES on this screen assembly; it is NOT LCD RESX.
-    // GT911 reports feed the swipe drawer and release-confirmed button taps.
-    wire S_touch_press, S_touch_held, S_touch_online;
-    wire S_touch_report_valid, S_menu_visible;
-    wire [15:0] S_touch_x, S_touch_y;
-    wire [3:0] S_touch_contacts;
-    wire S_touch_select_valid;
-    wire [1:0] S_touch_select_mode;
-    wire [15:0] S_touch_errors;
-    reg [1:0] S_requested_mode;
-    wire [1:0] S_camera_mode, S_isp_frame_mode, S_ddr_frame_mode;
-    wire [7:0] S_slot_modes;
+    // Standalone white balance UI; no image-style mode selector remains.
+    wire S_touch_online,S_pointer_report,S_ui_report;
+    wire [3:0] S_pointer_contacts,S_ui_contacts;
+    wire [15:0] S_touch_errors,S_pointer_x,S_pointer_y,S_touch_width,S_touch_height;
+    wire [9:0] S_ui_x,S_ui_y;
+    wire [3:0] S_ui_page;
+    wire [2:0] S_image_mode,S_image_mode_camera,S_isp_frame_mode,S_ddr_frame_mode;
+    wire [11:0] S_slot_modes;
+    wire [1:0] S_wb_mode,S_wb_preset;
+    wire [6:0] S_wb_index,S_ui_gain,S_gain_camera;
+    wire [18:0] S_wb_camera;
+    wire signed [4:0] S_wb_ab,S_wb_gm;
+    wire [36:0] S_wb_telemetry,S_wb_telemetry_display;
+    wire [38:0] S_ui_display;
+    wire S_detect_enable,S_tag_enable,S_wb_key_axis;
     wire S_touch_reset_n;
     display_reset_sync u_touch_reset (
         .I_clk(I_sys_clk),.I_async_reset_n(I_rst_n),.O_reset_n(S_touch_reset_n));
-    gt911_touch u_touch (
+    gt911_pointer u_touch (
         .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
         .IO_scl(IO_touch_scl),.IO_sda(IO_touch_sda),.IO_int(IO_touch_int),
-        .O_reset_n(O_screen_reset_n),.O_press(S_touch_press),.O_held(S_touch_held),
-        .O_report_valid(S_touch_report_valid),
-        .O_x(S_touch_x),.O_y(S_touch_y),.O_contacts(S_touch_contacts),
-        .O_online(S_touch_online),.O_error_count(S_touch_errors));
-    touch_ui_controller u_touch_ui_controller (
-        .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),
-        .I_report_valid(S_touch_report_valid),.I_contacts(S_touch_contacts),
-        .I_x(S_touch_x),.I_y(S_touch_y),
-        .O_menu_visible(S_menu_visible),
-        .O_select_valid(S_touch_select_valid),.O_select_mode(S_touch_select_mode));
-    always @(posedge I_sys_clk or negedge S_touch_reset_n) begin
-        if(!S_touch_reset_n) S_requested_mode<=0;
-        else if(S_touch_select_valid) S_requested_mode<=S_touch_select_mode;
-    end
-    mode_mailbox u_mode_to_camera (
+        .O_reset_n(O_screen_reset_n),.O_online(S_touch_online),.O_report(S_pointer_report),
+        .O_contacts(S_pointer_contacts),.O_x(S_pointer_x),.O_y(S_pointer_y),
+        .O_width(S_touch_width),.O_height(S_touch_height),.O_errors(S_touch_errors));
+    touch_coord_map #(.AUTO_SWAP(TOUCH_AUTO_SWAP),.INVERT_X(TOUCH_INVERT_X),.INVERT_Y(TOUCH_INVERT_Y)) u_touch_map (
+        .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),.I_report(S_pointer_report),.I_contacts(S_pointer_contacts),
+        .I_x(S_pointer_x),.I_y(S_pointer_y),.I_width(S_touch_width),.I_height(S_touch_height),
+        .O_report(S_ui_report),.O_contacts(S_ui_contacts),.O_x(S_ui_x),.O_y(S_ui_y));
+    wb_ui_control u_ui_control (
+        .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),.I_online(S_touch_online),
+        .I_report(S_ui_report),.I_contacts(S_ui_contacts),.I_x(S_ui_x),.I_y(S_ui_y),.I_buttons_n(I_button),
+        .O_page(S_ui_page),.O_mode(S_wb_mode),.O_preset(S_wb_preset),
+        .O_index(S_wb_index),.O_gain(S_ui_gain),.O_detect_enable(S_detect_enable),
+        .O_tag_enable(S_tag_enable),.O_image_mode(S_image_mode),
+        .O_ab(S_wb_ab),.O_gm(S_wb_gm),.O_key_axis(S_wb_key_axis));
+    config_mailbox #(.WIDTH(19),.RESET_VALUE(19'd30)) u_wb_config (
         .I_src_clk(I_sys_clk),.I_dst_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
-        .I_mode(S_requested_mode),.O_mode(S_camera_mode));
-
-    // Read-slot metadata arrives during vertical blanking. Capture it at the
-    // first active pixel and keep it fixed through every line of this frame.
-    (* async_reg="true" *) reg [1:0] S_mode_meta, S_mode_sync;
-    reg [1:0] S_visible_mode;
-    reg S_mode_pending;
-    wire [1:0] S_pixel_mode = S_mode_pending ? S_mode_sync : S_visible_mode;
-    always @(posedge S_dsi_tx_clk or negedge S_dsi_ready_n) begin
-        if(!S_dsi_ready_n) begin
-            S_mode_meta<=0; S_mode_sync<=0; S_visible_mode<=0; S_mode_pending<=1;
-        end else begin
-            S_mode_meta<=S_ddr_frame_mode; S_mode_sync<=S_mode_meta;
-            if(S_base_vsync) S_mode_pending<=1;
-            else if(S_base_de && S_mode_pending) begin
-                S_visible_mode<=S_mode_sync; S_mode_pending<=0;
-            end
-        end
-    end
+        .I_data({S_wb_ab,S_wb_gm,S_wb_mode,S_wb_index}),.O_data(S_wb_camera));
+    config_mailbox #(.WIDTH(7),.RESET_VALUE(7'd80)) u_gain_config (
+        .I_src_clk(I_sys_clk),.I_dst_clk(S_24m_clk),.I_rst_n(S_rst_n),
+        .I_data(S_ui_gain),.O_data(S_gain_camera));
+    config_mailbox #(.WIDTH(3),.RESET_VALUE(3'd0)) u_image_config (
+        .I_src_clk(I_sys_clk),.I_dst_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
+        .I_data(S_image_mode),.O_data(S_image_mode_camera));
+    config_mailbox #(.WIDTH(39),.RESET_VALUE({1'b0,5'd0,5'd0,1'b0,1'b0,4'd0,2'd0,2'd1,7'd30,7'd80,3'd0,1'b0})) u_ui_config (
+        .I_src_clk(I_sys_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
+        .I_data({S_wb_key_axis,S_wb_ab,S_wb_gm,S_detect_enable,S_tag_enable,
+                 S_ui_page,S_wb_mode,S_wb_preset,S_wb_index,S_ui_gain,
+                 S_image_mode,S_touch_online}),.O_data(S_ui_display));
+    config_mailbox #(.WIDTH(37),.RESET_VALUE({1'b0,12'd1024,12'd1024,12'd1024})) u_wb_telemetry (
+        .I_src_clk(S_csi_rx_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
+        .I_data(S_wb_telemetry),.O_data(S_wb_telemetry_display));
     always @(posedge S_10m_clk or negedge S_lp_reset_n) begin
         if (!S_lp_reset_n) S_delay_cnt <= 32'd0;
         else if (S_delay_cnt < 32'd10000000) S_delay_cnt <= S_delay_cnt + 1'b1;
@@ -614,13 +610,15 @@ module design_top_wrapper #(
 	
 
   
-  ae_set u_ae_set (
+    wire S_csi_line_end;
+    wire S_previous_bad,S_camera_frame_toggle,S_front_valid,S_frame_release,S_writes_idle;
+  camera_gain_apply u_gain_apply (
       .I_clk(S_24m_clk),
-      .I_rst(~S_rst_n),
-      .I_btn({I_button,2'b11}),
-      .I_cam_cfg_done(S_cam_cfg_done),
-      .I_ae_cfg_done(S_ae_cfg_done),
-      .O_ae_req(S_ae_req),
+      .I_rst_n(S_rst_n),
+      .I_gain(S_gain_camera),
+      .I_cam_done(S_cam_cfg_done),.I_frame_toggle(S_camera_frame_toggle),
+      .I_ae_done(S_ae_cfg_done),
+      .O_req(S_ae_req),
       .O_ae(S_ae),
       .O_ag(S_ag)
   );
@@ -695,6 +693,7 @@ csi_unpacket_2lane u_csi_unpacket(
 
 .O_csi_frame_start     ( S_csi_frame_start ),
 .O_csi_frame_end       ( S_csi_frame_end   ),
+.O_csi_line_end        ( S_csi_line_end    ),
 .O_csi_valid           ( S_csi_valid       ),
 .O_csi_data            ( S_csi_data        )
 );
@@ -763,8 +762,9 @@ assign S_raw_tuser  = S_axis_tuser;
 
 
 //ISP算法顶层模块
-isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
-.I_mode(S_camera_mode), .O_frame_mode(S_isp_frame_mode),
+isp_top u_isp_top (
+.I_wb_config(S_wb_camera),.I_image_mode(S_image_mode_camera),
+.O_wb_telemetry(S_wb_telemetry),.I_previous_bad(S_previous_bad), .O_frame_mode(S_isp_frame_mode),
 .axi4s_video_aclk(S_csi_rx_clk),
 .I_rst_n         (S_rst_n),
 .I_tlast         (S_raw_tlast	),
@@ -781,6 +781,12 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
   );
 
 
+    wire [31:0] S_capture_bad_count,S_drop_count,S_good_count,S_overflow_count;
+    camera_frame_check u_camera_check(.I_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
+      .I_sof(S_csi_frame_start),.I_eof(S_csi_frame_end),.I_valid(S_csi_valid),
+      .I_line_end(S_csi_line_end),
+      .I_lane_error(|S_lane_error),.O_previous_bad(S_previous_bad),
+      .O_frame_toggle(S_camera_frame_toggle),.O_bad_frames(S_capture_bad_count));
     video_in u_video_in(
         .I_rst_n              (  S_rst_n             ),
 
@@ -790,13 +796,16 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
         .I_camera_data        ( S_ISP_O_tdata  ),
         .I_camera_mode        ( S_isp_frame_mode ),
         .O_slot_modes         ( S_slot_modes ),
-        .I_mipi_rx_error      ( 1'b0			      ),
+        .I_mipi_rx_error      ( S_previous_bad ),
 
         .I_ddr_clk            ( S_ddr_clk             ),
 		.I_display_pause      ( 1'b0                  ),
         .I_video_out_rd_busy  ( S_video_out_rd_busy   ),
         .O_video_in_wr_busy   ( S_video_in_wr_busy    ),
         .O_video_out_rp       ( S_video_out_rp        ),
+        .O_front_valid(S_front_valid),.I_display_frame_release(S_frame_release),
+        .I_ddr_writes_idle(S_writes_idle),.O_dropped_frames(S_drop_count),
+        .O_good_frames(S_good_count),.O_fifo_overflows(S_overflow_count),
 
         .O_ddr_user_wr_en     ( S_vi_ddr_wr_en        ),
         .O_ddr_user_addr      ( S_vi_ddr_wr_addr      ),
@@ -825,6 +834,8 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
         .O_video_out_rd_busy ( S_video_out_rd_busy  ),
         .I_video_in_wr_busy  ( S_video_in_wr_busy   ),
         .I_video_out_rp      ( S_video_out_rp       ),
+        .I_front_valid(S_front_valid),.O_frame_release(S_frame_release),
+        .O_underflow_frames(),.O_overflow_frames(),
         .I_slot_modes        ( S_slot_modes ),
         .O_frame_mode        ( S_ddr_frame_mode ),
  
@@ -851,6 +862,7 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
         .I_ddr_user_addr         ( S_ddr_user_addr         ),
         .I_ddr_user_wr_data      ( S_ddr_user_wr_data      ),
         .O_ddr_user_ready        ( S_ddr_user_ready        ),
+        .O_writes_idle(S_writes_idle),
         .O_ddr_user_rd_valid     ( S_ddr_user_rd_valid     ),
         .O_ddr_user_rd_data      ( S_ddr_user_rd_data      ),
             
@@ -955,35 +967,33 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
     );
     end endgenerate
 
-    dsi_osd_overlay #(
-        .OSD_ENABLE(OSD_ENABLE),
-        .LOGO_X(OSD_LOGO_X), .LOGO_Y(OSD_LOGO_Y),
-        .TEXT_X(OSD_TEXT_X), .TEXT_Y(OSD_TEXT_Y),
-        .TEXT_COLOR(OSD_TEXT_COLOR)
-    ) u_dsi_osd_overlay (
-        .I_clk(S_dsi_tx_clk), .I_rst_n(S_dsi_ready_n),
-        .I_enable(S_pixel_mode==2),
-        .I_vsync(S_base_vsync), .I_hsync(S_base_hsync),
-        .I_de(S_base_de), .I_data(S_base_data),
-        .O_vsync(S_mixer_vsync), .O_hsync(S_mixer_hsync),
-        .O_de(S_mixer_de), .O_data(S_mixer_data)
-    );
+    wire S_target_vsync,S_target_hsync,S_target_de;
+    wire [23:0] S_target_data;
+    rgb_target_video u_rgb_target_video (
+        .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),
+        .I_enable(S_ui_display[27]),.I_page(S_ui_display[25:22]),
+        .I_vsync(S_base_vsync),.I_hsync(S_base_hsync),.I_de(S_base_de),.I_data(S_base_data),
+        .O_vsync(S_target_vsync),.O_hsync(S_target_hsync),.O_de(S_target_de),.O_data(S_target_data));
 
-
-
-
-
-    wire S_menu_vsync, S_menu_hsync, S_menu_de;
-    wire [23:0] S_menu_data;
-    dsi_menu_overlay u_dsi_menu_overlay (
-        .I_clk(S_dsi_tx_clk), .I_rst_n(S_dsi_ready_n),
-        .I_visible(S_menu_visible),
-        .I_mode(S_pixel_mode),
-        .I_vsync(S_mixer_vsync), .I_hsync(S_mixer_hsync),
-        .I_de(S_mixer_de), .I_data(S_mixer_data),
-        .O_vsync(S_menu_vsync), .O_hsync(S_menu_hsync),
-        .O_de(S_menu_de), .O_data(S_menu_data)
-    );
+    // Delay the complete config with the detector's three video registers.
+    // Even a mailbox update near VS cannot split the UI and target state.
+    localparam [38:0] UI_CONFIG_RESET = {1'b0,5'd0,5'd0,1'b0,1'b0,4'd0,
+                                         2'd0,2'd1,7'd30,7'd80,3'd0,1'b0};
+    reg S_base_vs_d;
+    reg [38:0] S_ui_frame;
+    wire [38:0] S_ui_frame_active=(S_base_vsync&&!S_base_vs_d)?S_ui_display:S_ui_frame;
+    reg [38:0] S_ui_display_d1,S_ui_display_d2,S_ui_display_d3;
+    always @(posedge S_dsi_tx_clk or negedge S_dsi_ready_n)
+    if(!S_dsi_ready_n)begin S_base_vs_d<=0;S_ui_frame<=UI_CONFIG_RESET;S_ui_display_d1<=UI_CONFIG_RESET;S_ui_display_d2<=UI_CONFIG_RESET;S_ui_display_d3<=UI_CONFIG_RESET;end
+    else begin
+        S_base_vs_d<=S_base_vsync;
+        if(S_base_vsync&&!S_base_vs_d)S_ui_frame<=S_ui_display;
+        S_ui_display_d1<=S_ui_frame_active;S_ui_display_d2<=S_ui_display_d1;S_ui_display_d3<=S_ui_display_d2;
+    end
+    wb_ui_overlay u_wb_ui_overlay (
+        .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),.I_config(S_ui_display_d3),.I_telemetry(S_wb_telemetry_display),
+        .I_vsync(S_target_vsync),.I_hsync(S_target_hsync),.I_de(S_target_de),.I_data(S_target_data),
+        .O_vsync(S_mixer_vsync),.O_hsync(S_mixer_hsync),.O_de(S_mixer_de),.O_data(S_mixer_data));
 
     rgb_24b_to_32b #(
        .H_ACTIVE (1024)
@@ -991,10 +1001,10 @@ isp_top #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_isp_top (
         .I_clk   ( S_dsi_tx_clk      ),
         .I_rst   ( ~S_dsi_ready_n    ),
 
-        .I_vsync ( S_menu_vsync      ),
-        .I_hsync ( S_menu_hsync      ),
-        .I_de    ( S_menu_de         ),
-        .I_data  ( S_menu_data       ),
+        .I_vsync ( S_mixer_vsync     ),
+        .I_hsync ( S_mixer_hsync     ),
+        .I_de    ( S_mixer_de        ),
+        .I_data  ( S_mixer_data      ),
                                                
         .O_vsync ( S_32b_vsync       ),
         .O_hsync ( S_32b_hsync       ),

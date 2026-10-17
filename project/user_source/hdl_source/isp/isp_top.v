@@ -1,12 +1,15 @@
-// SC500 720P ISP with the lab-ex2 Sobel stage before DDR packing.
+// SC500 720P standalone white balance demonstration ISP.
 // This reference pipeline is a continuous video stream; it has no stall buffer.
 module isp_top #(
-    parameter EDGE_THRESHOLD = 14'd80
+    parameter BRIGHTEN_ENABLE = 1'b1
 )(
     input          axi4s_video_aclk,
     input          I_rst_n,
-    input [1:0]    I_mode,
-    output [1:0]   O_frame_mode,
+    input [18:0]   I_wb_config,
+    input [2:0]    I_image_mode,
+    output [36:0] O_wb_telemetry,
+    input I_previous_bad,
+    output [2:0]   O_frame_mode,
     input          I_tlast,
     input          I_tuser,
     input  [39:0]  I_tdata,
@@ -24,8 +27,8 @@ module isp_top #(
     wire demosaic_last, demosaic_user, demosaic_valid, demosaic_ready;
     wire [95:0] awb_data;
     wire awb_last, awb_user, awb_valid, awb_ready;
-    wire [95:0] edge_data;
-    wire edge_last, edge_user, edge_valid;
+    wire [95:0] filter_data;
+    wire filter_last,filter_user,filter_valid;
 
     demosaic #(
         .IMG_HEIGHT(720), .IMG_WIDTH(1280),
@@ -44,36 +47,44 @@ module isp_top #(
         .I_tdata(demosaic_data), .O_tdata(rgb_data)
     );
 
-    awb #(.IMG_HEIGHT(720), .IMG_WIDTH(1280)) u_awb (
-        .I_clk(axi4s_video_aclk), .I_rst_n(I_rst_n),
-        .I_tlast(demosaic_last), .I_tuser(demosaic_user),
-        .I_tdata(rgb_data), .I_tvalid(demosaic_valid),
-        .I_tready(demosaic_ready),
-        .O_tlast(awb_last), .O_tuser(awb_user),
-        .O_tdata(awb_data), .O_tvalid(awb_valid), .O_tready(awb_ready)
-    );
-
-    isp_frame_select_96 #(.EDGE_THRESHOLD(EDGE_THRESHOLD)) u_frame_select (
-        .I_clk(axi4s_video_aclk),.I_rst_n(I_rst_n),.I_mode(I_mode),
-        .I_data(awb_data),.I_valid(awb_valid),.I_user(awb_user),.I_last(awb_last),
-        .I_ready(O_tready),.O_ready(awb_ready),.O_data(edge_data),
-        .O_valid(edge_valid),.O_user(edge_user),.O_last(edge_last),
-        .O_frame_mode(O_frame_mode));
+    reg [18:0] frame_config;
+    always @(posedge axi4s_video_aclk or negedge I_rst_n)
+     if(!I_rst_n)frame_config<=19'd30;else if(demosaic_user)frame_config<=I_wb_config;
+    wire [18:0] active_config=demosaic_user?I_wb_config:frame_config;
+    wire [11:0] applied_r,applied_b;wire statistics_ok;
+    assign O_wb_telemetry={statistics_ok,applied_r,12'd1024,applied_b};
+    wb_balance_96 u_white_balance (
+        .I_clk(axi4s_video_aclk),.I_rst_n(I_rst_n),
+        .I_mode(active_config[8:7]),.I_kelvin_index(active_config[6:0]),
+        .I_data(rgb_data),.I_valid(demosaic_valid),.I_user(demosaic_user),.I_last(demosaic_last),
+        .I_previous_bad(I_previous_bad),.I_ready(O_tready),.O_ready(demosaic_ready),.O_data(awb_data),
+        .O_valid(awb_valid),.O_user(awb_user),.O_last(awb_last),.O_gain_r(applied_r),.O_gain_b(applied_b),.O_statistics_ok(statistics_ok));
+    wire [95:0] tint_data;wire tint_valid,tint_user,tint_last;
+    wb_tint_96 u_tint(.I_clk(axi4s_video_aclk),.I_rst_n(I_rst_n),.I_enable(frame_config[8:7]==2),
+      .I_ab(frame_config[18:14]),.I_gm(frame_config[13:9]),.I_data(awb_data),
+      .I_valid(awb_valid),.I_user(awb_user),.I_last(awb_last),.O_data(tint_data),
+      .O_valid(tint_valid),.O_user(tint_user),.O_last(tint_last));
+    wire [95:0] bright_pixels;
+    rgb_brighten_96 #(.ENABLE(BRIGHTEN_ENABLE)) u_brighten(.I_data(tint_data),.O_data(bright_pixels));
+    image_filter_bank_96 u_filter_bank(
+      .I_clk(axi4s_video_aclk),.I_rst_n(I_rst_n),.I_mode(I_image_mode),
+      .I_data(bright_pixels),.I_valid(tint_valid),.I_user(tint_user),.I_last(tint_last),
+      .I_ready(O_tready),.O_data(filter_data),.O_valid(filter_valid),
+      .O_user(filter_user),.O_last(filter_last),.O_ready(),.O_frame_mode(O_frame_mode));
 
     data_96bit_to_128bit u_data_96bit_to_128bit (
         .I_clk(axi4s_video_aclk), .I_rst_n(I_rst_n),
-        .I_96b_frame_start(edge_user), .I_96b_valid(edge_valid),
-        .I_96b_data(edge_data),
+        .I_96b_frame_start(filter_user), .I_96b_valid(filter_valid),
+        .I_96b_data(filter_data),
         .O_128b_frame_start(O_tuser), .O_128b_valid(O_tvalid),
         .O_128b_data(O_tdata)
     );
 
-    // The DDR writer consumes frame_start/valid/data only. For the legacy
-    // status port, delay the edge end-of-line pulse through the packer cycle.
+    // Match the packer latency on the legacy end-of-line status port.
     reg packed_last;
     always @(posedge axi4s_video_aclk or negedge I_rst_n) begin
         if (!I_rst_n) packed_last <= 1'b0;
-        else          packed_last <= edge_last;
+        else          packed_last <= filter_last;
     end
     assign O_tlast = packed_last;
 endmodule
