@@ -1,0 +1,6 @@
+{
+  "baseline": "touch_style_clean",
+  "baseline_manifest_sha256": "4201e44050040d6547d97258c867aad3b3fb74e1225b8292d11fef3e609353dc",
+  "hardware_tested": false,
+  "reason": "Board photos reveal dark-detail loss and excessive saturation; retain two modes and capture/display transport; correct color mapping and add low-light coverage."
+}

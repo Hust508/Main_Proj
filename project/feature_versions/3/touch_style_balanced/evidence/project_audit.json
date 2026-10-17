@@ -1,0 +1,12 @@
+{
+  "modes": 2,
+  "project_files": [
+    "enhance_project\\lab_touch_style_balanced.al",
+    "enhance_project\\lab_touch_style_balanced_Runs\\phy_1\\lab_touch_style_balanced.prj",
+    "enhance_project\\lab_touch_style_balanced_Runs\\syn_1\\lab_touch_style_balanced.prj"
+  ],
+  "references": 270,
+  "original_user_source_files_byte_preserved": 243,
+  "old_styles_not_compiled": true,
+  "camera_configuration": "SC500CS 1280x720 60fps"
+}

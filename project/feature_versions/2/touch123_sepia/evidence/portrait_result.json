@@ -1,0 +1,17 @@
+{
+  "test": "portrait_720p_rtl_capture",
+  "pixels": 921600,
+  "seconds": 41.02,
+  "log": "PASS SEPIA_PORTRAIT W=1280 H=720 cycles=231860 pixels=921600 SOFs=1 packed_words=172800\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch123_sepia\\retro_verification\\sim_work\\sepia_portrait_tb_v2_joined.sv:673: $finish called at 2318630000 (1ps)\n",
+  "rgb_bytes_match_reference": true,
+  "source_sha256": {
+    "retro_extension\\sepia_lut.v": "a6d4ebb4e6a62ae0329e0f31db557be2872f4940ed4bf5fb5928c22dd1a28940",
+    "retro_extension\\sepia_core.v": "fc7db39dd7fa9ad878ff78e556cffeb208f2337a0fa58903521d268b26e4a2fa",
+    "retro_extension\\retro_frame_select.v": "947b95891f02da866f8eceb32a1b189d38aaac22be12075bb9facf8bea8f0902",
+    "retro_extension\\cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "user_source\\hdl_source\\isp\\edge_detect_96.v": "3edbe4678525d8a3195155cc097a363b7510a56948f96f3f081f655b899a7967",
+    "retro_verification\\sepia_portrait_tb.sv": "2e0b56c4276d85797d9658a87ddf87713c0c06793fd71b8dbea8f7e4d2fadad5"
+  },
+  "input_sha256": "9b8826baf895f0d8090a5f8f2589c846fc164317f0df40870a90ed8fbfe3e250",
+  "output_sha256": "ab32121955381a145ff764e51e28cc1301f17b45178dc524353aa05c644af9b8"
+}

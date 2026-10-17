@@ -1,0 +1,42 @@
+{
+  "test": "portrait_digital_exposure",
+  "log": "PASS TWO_MODES W=320 H=180 cycles=90908 pixels=172800 frames=3 packed_words=32400\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\style_exposure_tb_v2_joined.sv:965: $finish called at 909110000 (1ps)\n",
+  "seconds": 21.73,
+  "pixels": 172800,
+  "rgb_bytes_match_reference": true,
+  "not_board_raw": true,
+  "digital_brightness_divisors": [
+    1,
+    8,
+    32
+  ],
+  "detail_metrics": [
+    {
+      "brightness_divisor": 1,
+      "portrait_roi_luma_levels": 178,
+      "portrait_roi_zero_luma_fraction": 0.0
+    },
+    {
+      "brightness_divisor": 8,
+      "portrait_roi_luma_levels": 38,
+      "portrait_roi_zero_luma_fraction": 0.0
+    },
+    {
+      "brightness_divisor": 32,
+      "portrait_roi_luma_levels": 13,
+      "portrait_roi_zero_luma_fraction": 0.0
+    }
+  ],
+  "output_sha256": "440869fa5c348de25ed7cc2605fd0156e5b8ab742eb0fcd51316c54c86d70091",
+  "source_sha256": {
+    "enhance_extension/enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension/enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension/enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension/enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_extension/cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "enhance_verification/style_exposure_tb.sv": "324aa6436018d3f5f4a678c03b0e1f8e58bc17e1a62ffba2033bce3f9483fe38",
+    "enhance_verification/enhance_model.py": "cc38bd88dfd79923aa7943b32d0fa9e89f8310d0b666e49ff819c03116abe1d5",
+    "preview/original_720p.png": "636bec5f24373e712480eb80f14a77e300e6392cb6ae15036986e58ca93609eb",
+    "enhance_verification/run_exposure.py": "9f77305ac5bc3b3f37710cb785ae745682934dea5411e55354d800ccebc907ab"
+  }
+}

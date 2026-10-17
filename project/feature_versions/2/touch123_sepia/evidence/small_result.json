@@ -1,0 +1,13 @@
+{
+  "test": "small_four_modes",
+  "seconds": 0.74,
+  "log": "PASS SEPIA_FOUR_MODES W=48 H=24 cycles=4431 pixels=13828 SOFs=14 packed_words=2592\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch123_sepia\\retro_verification\\sim_work\\sepia_modes_tb_v2_joined.sv:668: $finish called at 44340000 (1ps)\n",
+  "source_sha256": {
+    "retro_extension\\sepia_lut.v": "a6d4ebb4e6a62ae0329e0f31db557be2872f4940ed4bf5fb5928c22dd1a28940",
+    "retro_extension\\sepia_core.v": "fc7db39dd7fa9ad878ff78e556cffeb208f2337a0fa58903521d268b26e4a2fa",
+    "retro_extension\\retro_frame_select.v": "947b95891f02da866f8eceb32a1b189d38aaac22be12075bb9facf8bea8f0902",
+    "retro_extension\\cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "user_source\\hdl_source\\isp\\edge_detect_96.v": "3edbe4678525d8a3195155cc097a363b7510a56948f96f3f081f655b899a7967",
+    "retro_verification\\sepia_modes_tb.sv": "6ac836a8bd6c731a9f779de4f8cf9cba654cb7c77482f69ffd7575d84402a955"
+  }
+}

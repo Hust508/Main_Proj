@@ -1,0 +1,13 @@
+{
+  "test": "small_48_24",
+  "log": "PASS TWO_MODES W=48 H=24 cycles=10559 pixels=17280 frames=15 packed_words=3240\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\two_modes_tb_v2_joined.sv:965: $finish called at 105620000 (1ps)\n",
+  "seconds": 2.29,
+  "source_sha256": {
+    "enhance_extension\\enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension\\enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension\\enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension\\enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_extension\\cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "enhance_verification\\two_modes_tb.sv": "e9c8e36f3d32da5412664f48bbad0f2acf8a2720fea2e79989a0a22d12ff9c67"
+  }
+}

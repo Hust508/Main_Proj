@@ -1,0 +1,11 @@
+{
+  "test": "enhance_abort",
+  "log": "PASS enhancement partial-frame abort to raw and to enhancement, no stale row/pipeline leakage, exact borders and reset cancellation; 3840 checked pixels\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\enhance_abort_tb_v2_joined.sv:923: $finish called at 50910000 (1ps)\n",
+  "source_sha256": {
+    "enhance_extension\\enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension\\enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension\\enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension\\enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_verification\\enhance_abort_tb.sv": "d828353b0805e812f971d7b73157383efd2f0aab2479787c44c039164d8eeedc"
+  }
+}

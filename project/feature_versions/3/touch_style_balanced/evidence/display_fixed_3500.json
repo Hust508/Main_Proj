@@ -1,0 +1,22 @@
+{
+  "test": "display_fixed",
+  "log": "PASS PRESSURE clean=1 stall=3500 dropped_words=0 published=4 writes=15360 reads=12672 max_capture=270 max_queue=500 black_pixels=0 white_pixels=65536\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\enhance_display_tb_v2_joined.sv:3239: $finish called at 2322462840 (1ps)\n",
+  "seconds": 29.14,
+  "source_sha256": {
+    "enhance_extension\\enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_extension\\enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension\\enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension\\enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension\\cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "enhance_extension\\cartoon_video_in.v": "df66081a338101a0892e5acb6a91ed48f855261ce8c3af62444ed74c03299a9d",
+    "enhance_extension\\cartoon_video_out.v": "e4eb0db7a269f06b93b2bbde3d5f6aa04130e136aa05d9fd3e2330a9374c3b1e",
+    "enhance_extension\\cartoon_command_queue.v": "e6e5121b879cf476ba3e464a18e53e7f4fd4872e2b16762b7e65ba435e66528b",
+    "enhance_extension\\cartoon_ddr_bridge.v": "18ab4eb862d622cc2eadf744cd4d6f7ec98cc1cc772f33a822689d64967da821",
+    "user_source\\ip_source\\w128_d512_fifo\\w128_d512_fifo.v": "5cd5f8e2216dd8989dc1e54d42b4da348dbb09f130bbe92deaa205db53a96bb4",
+    "user_source\\ip_source\\w128_d512_fifo\\soft_fifo_al_4057d6b76aa6.v": "75e5785ae0733b4ef7ce9a80d09f68419ceb0a6a5143baf866c5442ca310cb5e",
+    "user_source\\ip_source\\w155_d512_fifo\\w155_d512_fifo.v": "d600bcd8e876691d6cf3a512650e7e69118fc8016e9fdf892ac85e4c63851e37",
+    "user_source\\ip_source\\w155_d512_fifo\\soft_fifo_al_f58e8b3e1f3d.v": "cffdae59273ca6d7a4ab6473baa8cf94e81ab1900c4b9e358adca6e4b196114d",
+    "enhance_verification\\enhance_display_tb.sv": "75f121e729445a84c0c4664543ce50a50e40d0b93265613d22cc9b516728cb32"
+  },
+  "baseline_source_sha256": {}
+}

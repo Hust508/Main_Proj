@@ -1,0 +1,2 @@
+# Keep imported FPGA project files byte-for-byte identical to the validated packages.
+project/feature_versions/** -text

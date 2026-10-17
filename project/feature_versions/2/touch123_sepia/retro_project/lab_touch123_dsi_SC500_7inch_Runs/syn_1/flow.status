@@ -1,0 +1,23 @@
+Location         : C:\Users\18490\Desktop\carton\2\touch123_sepia\retro_project\lab_touch123_dsi_SC500_7inch_Runs\syn_1
+Running with     : Tang Dynasty v6.2.168116
+                   Copyright (c) 2012-2025 Anlogic Inc.
+Top Model        : retro_top
+Device           : PH1P35MDG324
+Speed            : 3
+
+Timing Mode      : basic
+Setup            : WNS   281ps  TNS        0ps  NUM_FEPS     0
+Hold             : WNS   114ps  TNS        0ps  NUM_FEPS     0
+
+Flow Statistics  :
+--------------------------------------------------------------------------------------------------
+     command     |  #calls  |  wall time  |  cpu time(s)  |  used memory(mb)  |  peak memory(mb)  
+--------------------------------------------------------------------------------------------------
+  optimize_gate  |    1     |  33s(50%)   |    33(51%)    |       1206        |       1206        
+  optimize_rtl   |    1     |  32s(48%)   |    30(46%)    |        909        |        971        
+  import_device  |    1     |   1s(1%)    |     1(1%)     |        326        |        326        
+    read_adc     |    1     |   0s(0%)    |     0(0%)     |        645        |        646        
+    read_sdc     |    3     |   0s(0%)    |     0(0%)     |        641        |        646        
+--------------------------------------------------------------------------------------------------
+      total      |    7     |    1m6s     |      64       |       1206        |       1206        
+--------------------------------------------------------------------------------------------------

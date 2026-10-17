@@ -1,0 +1,12 @@
+{
+  "project_files": [
+    "retro_project\\lab_touch123_dsi_SC500_7inch.al",
+    "retro_project\\lab_touch123_dsi_SC500_7inch_Runs\\phy_1\\lab_touch123_dsi_SC500_7inch.prj",
+    "retro_project\\lab_touch123_dsi_SC500_7inch_Runs\\syn_1\\lab_touch123_dsi_SC500_7inch.prj"
+  ],
+  "dependency_references": 273,
+  "top": "retro_top",
+  "osd_only_mode_2": true,
+  "modes": 4,
+  "no_cartoon_core": true
+}

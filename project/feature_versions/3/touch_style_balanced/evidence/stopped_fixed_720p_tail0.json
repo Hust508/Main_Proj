@@ -1,0 +1,17 @@
+{
+  "test": "stopped_fixed_720p_tail0",
+  "log": "FRAME clockfix=1 index=0 A=00038400 N=00038400 E=00038400 P=0002a300 published=1\nFRAME clockfix=1 index=1 A=00038400 N=00038400 E=00038400 P=0002a300 published=2\nPASS stopped-DPHY clockfix=1 W=1280 H=720 tail=0 A=00038400 N=00038400 E=00038400 P=0002a300 published=2 writes=345600 max_rgb_fifo=197\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\stopped_clock_fixed_720p_tail0_tb_v2_joined.sv:2819: $finish called at 24179036800 (1ps)\n",
+  "seconds": 252.03,
+  "source_sha256": {
+    "enhance_extension\\enhance_rgb_async_fifo.v": "4bd3ba9bd6b28eb8735096c90e03284cbab97939c352e5ccd2db82526b15fb1e",
+    "enhance_extension\\enhance_clock_bridge.v": "2860bffdf3f7f452672a0399a64000c387fea809e5065bee8403d48023f86bf4",
+    "enhance_extension\\enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension\\enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension\\enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension\\enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_extension\\cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "enhance_extension\\cartoon_video_in.v": "df66081a338101a0892e5acb6a91ed48f855261ce8c3af62444ed74c03299a9d",
+    "user_source\\ip_source\\w128_d512_fifo\\soft_fifo_al_4057d6b76aa6.v": "75e5785ae0733b4ef7ce9a80d09f68419ceb0a6a5143baf866c5442ca310cb5e",
+    "enhance_verification\\stopped_clock_fixed_720p_tail0_tb.sv": "1b6b34bc415a99a6b3a57a55ff28447fbeec8b2a9a65b61448879f34efa4927a"
+  }
+}

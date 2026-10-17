@@ -1,0 +1,16 @@
+{
+  "messages": [
+    "PHY-5060 CRITICAL-WARNING: Clock net candidate u_uicfgcs500/u_i2c/scl_clk has mixed fanouts of 1 clock pins; 2 data/ctrl pins. Please check connection of the net in design.",
+    "PHY-5060 CRITICAL-WARNING: Clock net candidate u_isp_top/u_clock_bridge/u_rgb_fifo/clkr_syn_1 has mixed fanouts of 5180 clock pins; 1 data/ctrl pins. Please check connection of the net in design.",
+    "PHY-5073 CRITICAL-WARNING: Pin u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/u_PH1P_LOGIC_DPHY_MIPI_TX.i_phy_dpll_ref_clk is driven by GCLK which will reduce performance, please use MLCLK instead.",
+    "PHY-5079 CRITICAL-WARNING: Marked 2 clock net(s) utilize the local routing resources. Please check log message and the sinks of clock nets.",
+    "PHY-5079 CRITICAL-WARNING: Marked 2 clock net(s) utilize the local routing resources. Please check log message and the sinks of clock nets."
+  ],
+  "unique_messages": [
+    "PHY-5060 CRITICAL-WARNING: Clock net candidate u_uicfgcs500/u_i2c/scl_clk has mixed fanouts of 1 clock pins; 2 data/ctrl pins. Please check connection of the net in design.",
+    "PHY-5060 CRITICAL-WARNING: Clock net candidate u_isp_top/u_clock_bridge/u_rgb_fifo/clkr_syn_1 has mixed fanouts of 5180 clock pins; 1 data/ctrl pins. Please check connection of the net in design.",
+    "PHY-5073 CRITICAL-WARNING: Pin u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/u_PH1P_LOGIC_DPHY_MIPI_TX.i_phy_dpll_ref_clk is driven by GCLK which will reduce performance, please use MLCLK instead.",
+    "PHY-5079 CRITICAL-WARNING: Marked 2 clock net(s) utilize the local routing resources. Please check log message and the sinks of clock nets."
+  ],
+  "review": "Retained clock routing advisories: inspect full logs. Real clock periods and existing CDC exceptions unchanged. Timing pass applies to covered constrained paths; board unverified."
+}

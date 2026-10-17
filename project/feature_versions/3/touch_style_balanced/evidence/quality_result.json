@@ -1,0 +1,589 @@
+{
+  "test": "shadow_color_noise_quality",
+  "log": "PASS TWO_MODES W=256 H=160 cycles=108254 pixels=245760 frames=6 packed_words=46080\nC:\\Users\\18490\\.codex\\.chatgpt-projects\\g-p-6ad1b89ac0c081918454021fff4f6be1\\outputs\\touch_style_balanced\\enhance_verification\\sim_work\\style_quality_tb_v2_joined.sv:965: $finish called at 1082570000 (1ps)\nPASS all 32 dark gray codes remain distinct in both modes; neutrals and white/black endpoints; all hue families retain channel order; spatial neighbor noise decreases on 14 gray/color/skin patches at normal and 1/8 brightness\n",
+  "seconds": 36.64,
+  "pixels": 245760,
+  "rgb_bytes_match_reference": true,
+  "hue_and_skin_samples": [
+    {
+      "input": [
+        190,
+        215,
+        245
+      ],
+      "output": [
+        175,
+        211,
+        246
+      ],
+      "input_at_one_eighth": [
+        23,
+        26,
+        30
+      ],
+      "output_at_one_eighth": [
+        32,
+        38,
+        46
+      ]
+    },
+    {
+      "input": [
+        245,
+        185,
+        185
+      ],
+      "output": [
+        246,
+        172,
+        170
+      ],
+      "input_at_one_eighth": [
+        30,
+        23,
+        23
+      ],
+      "output_at_one_eighth": [
+        46,
+        32,
+        32
+      ]
+    },
+    {
+      "input": [
+        190,
+        235,
+        185
+      ],
+      "output": [
+        178,
+        237,
+        173
+      ],
+      "input_at_one_eighth": [
+        23,
+        29,
+        23
+      ],
+      "output_at_one_eighth": [
+        32,
+        45,
+        32
+      ]
+    },
+    {
+      "input": [
+        245,
+        235,
+        170
+      ],
+      "output": [
+        249,
+        236,
+        154
+      ],
+      "input_at_one_eighth": [
+        30,
+        29,
+        21
+      ],
+      "output_at_one_eighth": [
+        46,
+        45,
+        28
+      ]
+    },
+    {
+      "input": [
+        220,
+        190,
+        240
+      ],
+      "output": [
+        216,
+        178,
+        242
+      ],
+      "input_at_one_eighth": [
+        27,
+        23,
+        30
+      ],
+      "output_at_one_eighth": [
+        40,
+        32,
+        46
+      ]
+    },
+    {
+      "input": [
+        180,
+        235,
+        235
+      ],
+      "output": [
+        171,
+        242,
+        242
+      ],
+      "input_at_one_eighth": [
+        22,
+        29,
+        29
+      ],
+      "output_at_one_eighth": [
+        31,
+        45,
+        45
+      ]
+    },
+    {
+      "input": [
+        245,
+        205,
+        160
+      ],
+      "output": [
+        243,
+        194,
+        137
+      ],
+      "input_at_one_eighth": [
+        30,
+        25,
+        20
+      ],
+      "output_at_one_eighth": [
+        46,
+        36,
+        27
+      ]
+    },
+    {
+      "input": [
+        210,
+        170,
+        130
+      ],
+      "output": [
+        217,
+        164,
+        113
+      ],
+      "input_at_one_eighth": [
+        26,
+        21,
+        16
+      ],
+      "output_at_one_eighth": [
+        41,
+        31,
+        21
+      ]
+    },
+    {
+      "input": [
+        128,
+        128,
+        128
+      ],
+      "output": [
+        147,
+        147,
+        147
+      ],
+      "input_at_one_eighth": [
+        16,
+        16,
+        16
+      ],
+      "output_at_one_eighth": [
+        28,
+        28,
+        28
+      ]
+    },
+    {
+      "input": [
+        255,
+        255,
+        255
+      ],
+      "output": [
+        255,
+        255,
+        255
+      ],
+      "input_at_one_eighth": [
+        31,
+        31,
+        31
+      ],
+      "output_at_one_eighth": [
+        47,
+        47,
+        47
+      ]
+    },
+    {
+      "input": [
+        0,
+        0,
+        0
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "input_at_one_eighth": [
+        0,
+        0,
+        0
+      ],
+      "output_at_one_eighth": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "input": [
+        24,
+        24,
+        24
+      ],
+      "output": [
+        39,
+        39,
+        39
+      ],
+      "input_at_one_eighth": [
+        3,
+        3,
+        3
+      ],
+      "output_at_one_eighth": [
+        7,
+        7,
+        7
+      ]
+    },
+    {
+      "input": [
+        190,
+        135,
+        110
+      ],
+      "output": [
+        203,
+        129,
+        98
+      ],
+      "input_at_one_eighth": [
+        23,
+        16,
+        13
+      ],
+      "output_at_one_eighth": [
+        37,
+        23,
+        17
+      ]
+    },
+    {
+      "input": [
+        120,
+        80,
+        60
+      ],
+      "output": [
+        142,
+        86,
+        54
+      ],
+      "input_at_one_eighth": [
+        15,
+        10,
+        7
+      ],
+      "output_at_one_eighth": [
+        26,
+        16,
+        8
+      ]
+    },
+    {
+      "input": [
+        75,
+        50,
+        40
+      ],
+      "output": [
+        99,
+        58,
+        41
+      ],
+      "input_at_one_eighth": [
+        9,
+        6,
+        5
+      ],
+      "output_at_one_eighth": [
+        18,
+        10,
+        8
+      ]
+    },
+    {
+      "input": [
+        230,
+        175,
+        145
+      ],
+      "output": [
+        237,
+        167,
+        129
+      ],
+      "input_at_one_eighth": [
+        28,
+        21,
+        18
+      ],
+      "output_at_one_eighth": [
+        44,
+        30,
+        24
+      ]
+    }
+  ],
+  "dark_gray_input": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "dark_gray_style_output": [
+    0,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    14,
+    16,
+    18,
+    19,
+    21,
+    22,
+    24,
+    25,
+    26,
+    28,
+    29,
+    31,
+    32,
+    33,
+    35,
+    36,
+    37,
+    39,
+    40,
+    41,
+    42,
+    44,
+    45,
+    46,
+    47
+  ],
+  "dark_gray_natural_output": [
+    0,
+    1,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "patch_noise": [
+    {
+      "patch": 0,
+      "input_neighbor_jitter": 5.560446859903381,
+      "output_neighbor_jitter": 0.9248590982286634,
+      "dim_input_neighbor_jitter": 1.5982588566827698,
+      "dim_output_neighbor_jitter": 0.43313204508856684
+    },
+    {
+      "patch": 1,
+      "input_neighbor_jitter": 5.716223832528181,
+      "output_neighbor_jitter": 0.7540962157809984,
+      "dim_input_neighbor_jitter": 1.5536131239935589,
+      "dim_output_neighbor_jitter": 0.6632749597423511
+    },
+    {
+      "patch": 2,
+      "input_neighbor_jitter": 5.657789855072464,
+      "output_neighbor_jitter": 1.723913043478261,
+      "dim_input_neighbor_jitter": 1.5759359903381642,
+      "dim_output_neighbor_jitter": 0.6152173913043478
+    },
+    {
+      "patch": 3,
+      "input_neighbor_jitter": 5.3769424315619965,
+      "output_neighbor_jitter": 1.0866143317230272,
+      "dim_input_neighbor_jitter": 1.5810789049919485,
+      "dim_output_neighbor_jitter": 0.5271135265700483
+    },
+    {
+      "patch": 4,
+      "input_neighbor_jitter": 5.590680354267311,
+      "output_neighbor_jitter": 1.0667169887278583,
+      "dim_input_neighbor_jitter": 1.5891203703703702,
+      "dim_output_neighbor_jitter": 0.660366344605475
+    },
+    {
+      "patch": 5,
+      "input_neighbor_jitter": 5.680706521739131,
+      "output_neighbor_jitter": 0.9532910628019324,
+      "dim_input_neighbor_jitter": 1.5988929146537842,
+      "dim_output_neighbor_jitter": 0.4651167471819646
+    },
+    {
+      "patch": 6,
+      "input_neighbor_jitter": 5.719867149758454,
+      "output_neighbor_jitter": 2.1813003220611913,
+      "dim_input_neighbor_jitter": 1.6104066022544283,
+      "dim_output_neighbor_jitter": 0.54591384863124
+    },
+    {
+      "patch": 7,
+      "input_neighbor_jitter": 5.7699879227053135,
+      "output_neighbor_jitter": 1.1136674718196455,
+      "dim_input_neighbor_jitter": 1.5922805958132047,
+      "dim_output_neighbor_jitter": 0.5043075684380032
+    },
+    {
+      "patch": 8,
+      "input_neighbor_jitter": 5.706632447665056,
+      "output_neighbor_jitter": 1.0899255233494363,
+      "dim_input_neighbor_jitter": 1.5551831723027374,
+      "dim_output_neighbor_jitter": 0.7781400966183576
+    },
+    {
+      "patch": 9,
+      "input_neighbor_jitter": 2.9398852657004833,
+      "output_neighbor_jitter": 0.4128623188405797,
+      "dim_input_neighbor_jitter": 1.6056763285024154,
+      "dim_output_neighbor_jitter": 0.6681964573268921
+    },
+    {
+      "patch": 10,
+      "input_neighbor_jitter": 2.8682266505636074,
+      "output_neighbor_jitter": 1.3582930756843798,
+      "dim_input_neighbor_jitter": 0.792079307568438,
+      "dim_output_neighbor_jitter": 0.7162842190016103
+    },
+    {
+      "patch": 11,
+      "input_neighbor_jitter": 5.605152979066022,
+      "output_neighbor_jitter": 1.4118860708534622,
+      "dim_input_neighbor_jitter": 1.5943739935587762,
+      "dim_output_neighbor_jitter": 0.8550422705314009
+    },
+    {
+      "patch": 12,
+      "input_neighbor_jitter": 5.567824074074074,
+      "output_neighbor_jitter": 1.0760970209339775,
+      "dim_input_neighbor_jitter": 1.5475644122383252,
+      "dim_output_neighbor_jitter": 0.5348329307568438
+    },
+    {
+      "patch": 13,
+      "input_neighbor_jitter": 5.656743156199678,
+      "output_neighbor_jitter": 1.4669182769726248,
+      "dim_input_neighbor_jitter": 1.617351046698873,
+      "dim_output_neighbor_jitter": 0.5529891304347826
+    },
+    {
+      "patch": 14,
+      "input_neighbor_jitter": 5.71850845410628,
+      "output_neighbor_jitter": 1.1276268115942027,
+      "dim_input_neighbor_jitter": 1.5551429146537843,
+      "dim_output_neighbor_jitter": 0.5876710950080515
+    },
+    {
+      "patch": 15,
+      "input_neighbor_jitter": 5.785004025764895,
+      "output_neighbor_jitter": 1.186694847020934,
+      "dim_input_neighbor_jitter": 1.6121175523349436,
+      "dim_output_neighbor_jitter": 0.5503220611916264
+    }
+  ],
+  "noise_seed": 90210,
+  "output_sha256": "1c7d5e1e7f28e531a8f8f68c58ff25ce72329c84fb7673e3179bd540ad9435e4",
+  "source_sha256": {
+    "enhance_extension/enhance_core.v": "1c6b9d3c14bb74feeef1830eea4b7483f85c6e1350f88aab542218942550d9d2",
+    "enhance_extension/enhance_window.v": "dda107ec9f78a17b2a376ee9bb5ebe8b59e6bb782343e407a6b7addb6ea66b61",
+    "enhance_extension/enhance_lut.v": "2db5630caddcb48977995039b9795c10e4b1934190ee8e39b184bdc6d04045e5",
+    "enhance_extension/enhance_frame_select.v": "d769f7e93016561ba0ae43329cf8ece5090eb79fa8359a7e4a57b1103f6e13e7",
+    "enhance_extension/cartoon_packer.v": "0c198d8475f833e95bc72f882cee2106ab03a395552f7968e6a28c23e0c37c80",
+    "enhance_verification/style_quality_tb.sv": "fed7f514c80884e99c2bcd9d963577ada7e9b8fec13509c89cf81344c1f68836",
+    "enhance_verification/enhance_model.py": "cc38bd88dfd79923aa7943b32d0fa9e89f8310d0b666e49ff819c03116abe1d5",
+    "enhance_verification/run_quality.py": "3f5df41297982831378ca830619c89d620d7d9ecfe0df167cf2b31a208f70313"
+  }
+}

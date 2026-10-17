@@ -10,6 +10,7 @@
 | [完整交付 ZIP](downloads/lab_touch123_DSI_SC500_7inch.zip) | 直接下载和解压使用 |
 | [project/BUILD_REPORT.md](project/BUILD_REPORT.md) | 已有构建与验证结果 |
 | [版本索引](docs/VERSIONS.md) | 例程一、二、三与主工程的关系 |
+| [后续功能工程](project/feature_versions/README.md) | 从本地开发目录迁入的复古风格与视觉增强工程 |
 | [历史仓库](https://github.com/Hust508/History_Proj) | 早期独立例程 |
 
 硬件：MLKPAI-F02 / FC02、PH1P35MDG324（Speed -3）、SC500CS、配套 7 寸 1024×600 DSI 触摸屏（GT911）。编译工具为安路 TD 6.2.1。
