@@ -11,7 +11,11 @@ module video_out (
     input wire I_front_valid,output wire O_frame_release,
     output reg [31:0] O_underflow_frames,O_overflow_frames,
     input wire[11:0]   I_slot_modes,
+    input wire[63:0]   I_slot_sequences,
+    input wire[15:0]   I_capture_sequence,
     output reg[2:0]   O_frame_mode,
+    output wire[7:0]  O_frame_latency,
+    output wire       O_frame_latency_valid,
     output wire       O_ddr_user_rd_en,
     output reg[24:0]  O_ddr_user_addr,
     input wire        I_ddr_user_ready,
@@ -44,6 +48,7 @@ module video_out (
       O_overflow_frames<=O_overflow_frames+1'b1;overflow_seen<=1;
     end
     reg[7:0]    S_fifo_rst_cnt;
+    wire        S_frame_load = S_fifo_rst && (S_fifo_rst_cnt == 8'd10);
     wire[8:0]   S_fifo_wr_num;       
     wire        S_fifo_rd_en;        
     wire[127:0] S_fifo_rd_data;      
@@ -62,11 +67,17 @@ module video_out (
 
 
 
-    // Capture the selected slot's mode on the same edge as its read address.
+    // Capture all metadata on the same edge as the selected slot's read address.
     always @(posedge I_ddr_clk or negedge I_rst_n) begin
         if(!I_rst_n) O_frame_mode<=0;
-        else if(S_video_frame_start) O_frame_mode<=I_slot_modes[I_video_out_rp*3 +: 3];
+        else if(S_frame_load) O_frame_mode<=I_slot_modes[I_video_out_rp*3 +: 3];
     end
+
+    frame_latency_meter u_frame_latency_meter(
+        .I_clk(I_ddr_clk),.I_rst_n(I_rst_n),.I_sample(S_frame_load),.I_valid(I_front_valid),
+        .I_capture_sequence(I_capture_sequence),
+        .I_display_sequence(I_slot_sequences[I_video_out_rp*16 +: 16]),
+        .O_valid(O_frame_latency_valid),.O_frame_latency(O_frame_latency));
 
     localparam IMAGE_BASE_ADDR_0 = 25'd0;
     localparam IMAGE_BASE_ADDR_1 = 25'd7000000;
@@ -154,7 +165,7 @@ module video_out (
         if(!I_rst_n)
             O_ddr_user_addr <= 'd0;
         else
-            if(S_fifo_rst&&S_fifo_rst_cnt==8'd10)
+            if(S_frame_load)
                 begin
                     case(I_video_out_rp)
                         'd0: O_ddr_user_addr <= IMAGE_BASE_ADDR_0 + CROP_OFFSET;

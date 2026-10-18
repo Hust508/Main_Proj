@@ -13,7 +13,7 @@ module telemetry_tb;
  end
  reg vs=0,de=0;wire [23:0] out;
  wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) ui(.I_clk(dst),.I_rst_n(rst),
- .I_config({1'b0,5'd0,5'd0,1'b0,1'b0,4'd2,2'd0,2'd1,7'd30,7'd80,3'd0,1'b1}),.I_telemetry(received),
+ .I_config({1'b0,5'd0,5'd0,1'b0,1'b0,4'd2,2'd0,2'd1,7'd30,7'd80,3'd0,1'b1}),.I_telemetry(received),.I_latency(9'd0),
  .I_vsync(vs),.I_hsync(1'b0),.I_de(de),.I_data(24'h123456),.O_vsync(),.O_hsync(),.O_de(),.O_data(out));
  task new_frame;begin @(negedge dst);de=0;vs=1;repeat(3)@(negedge dst);vs=0;repeat(3)@(negedge dst);de=1;repeat(3)@(negedge dst);end endtask
  reg [36:0] held;

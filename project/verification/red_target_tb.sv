@@ -15,7 +15,7 @@ module red_target_tb;
   ui_c1<=(v&&!ui_vd)?ui_cfg:ui_frame;ui_c2<=ui_c1;ui_c3<=ui_c2;
  end
  wire uv,uh,ud;wire [23:0] ui_rgb;
- wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) final_ui(.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),
+ wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) final_ui(.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),.I_latency(9'd0),
   .I_clk(clk),.I_rst_n(rst),.I_config(ui_c3),.I_vsync(ov),.I_hsync(oh),.I_de(od),.I_data(data),
   .O_vsync(uv),.O_hsync(uh),.O_de(ud),.O_data(ui_rgb));
  reg check_uv=0,check_uh=0,check_ud=0;

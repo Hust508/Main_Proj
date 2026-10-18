@@ -20,7 +20,7 @@ module crop_tb;
  wire ready=rst&&!stall&&(cycle%7!=0)&&(cycle%11!=0);
  video_out dut(.I_rst_n(rst),.I_ddr_clk(ddr),.O_video_out_rd_busy(busy),.I_video_in_wr_busy(1'b0),
  .I_video_out_rp(rp),.I_front_valid(1'b1),.O_frame_release(release_frame),.O_underflow_frames(under),.O_overflow_frames(over),
- .I_slot_modes(12'd0),.O_frame_mode(),.O_ddr_user_rd_en(req),.O_ddr_user_addr(addr),.I_ddr_user_ready(ready),
+ .I_slot_modes(12'd0),.I_slot_sequences(64'd0),.I_capture_sequence(16'd0),.O_frame_mode(),.O_frame_latency(),.O_frame_latency_valid(),.O_ddr_user_rd_en(req),.O_ddr_user_addr(addr),.I_ddr_user_ready(ready),
  .I_ddr_user_rd_valid(returns[30]),.I_ddr_user_rd_data(words[30]),.I_dsi_clk(dsi),.I_video_vsync(vs),.I_video_rd_en(rd),.O_vdieo_data(pixel));
  always @(posedge ddr)begin
   cycle=cycle+1;

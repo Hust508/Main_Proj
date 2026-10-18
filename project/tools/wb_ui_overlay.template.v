@@ -2,6 +2,7 @@
 module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/wb_ui_font.hex")(
  input wire I_clk,I_rst_n,input wire [38:0] I_config,
  input wire [36:0] I_telemetry,
+ input wire [8:0] I_latency,
  input wire I_vsync,I_hsync,I_de,input wire [23:0] I_data,
  output reg O_vsync,O_hsync,O_de,output reg [23:0] O_data
 );
@@ -16,6 +17,10 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [38:0] active=(pending||frame_start)?I_config:cfg;
  reg [36:0] telemetry_cfg;
  wire [36:0] telemetry=(pending||frame_start)?I_telemetry:telemetry_cfg;
+ reg [8:0] latency_cfg;
+ wire [8:0] latency=(pending||frame_start)?I_latency:latency_cfg;
+ wire latency_valid=latency[8];
+ wire [7:0] latency_frames=latency[7:0];
  wire signed [4:0] ab=active[37:33],gm=active[32:28];
  wire signed [10:0] point_x=11'sd800+$signed(ab)*11'sd14;
  wire signed [10:0] point_y=11'sd300-$signed(gm)*11'sd14;
@@ -35,7 +40,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [10:0] thumb_x=11'd600+index*11'd5;
  wire [10:0] gain_x=11'd600+gain_level*11'd5;
  always @(posedge I_clk or negedge I_rst_n)
- if(!I_rst_n)begin telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
+ if(!I_rst_n)begin latency_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
  else begin
   vs_d<=I_vsync;de_d<=I_de;
   if(frame_start)begin x_count<=I_de?11'd1:11'd0;y_count<=0;pending<=1;end
@@ -43,7 +48,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
    if(I_de)x_count<=x_count+1'b1;else x_count<=0;
    if(de_d&&!I_de)y_count<=y_count+1'b1;
   end
-  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;pending<=0;end
+  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;pending<=0;end
  end
  // GENERATED_GLYPHS
  function automatic in_rect(input [10:0] px,py,input integer left,top,right,bottom);
@@ -51,14 +56,14 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  endfunction
  reg [23:0] background,foreground;
  reg text_on;
- reg [5:0] text_id;
+ reg [6:0] text_id;
  reg [10:0] origin_x,origin_y;
  reg [10:0] dx,dy;
  reg [5:0] char_pos;
  reg [4:0] char_col,char_row;
  reg [7:0] char_glyph;
  reg [12:0] font_addr;
- task automatic label(input [5:0] id,input integer lx,ly,length);
+ task automatic label(input [6:0] id,input integer lx,ly,length);
   begin if(in_rect(x,y,lx,ly,lx+length*24,ly+24))begin text_on=1;text_id=id;origin_x=lx;origin_y=ly;end end
  endtask
  always @(*)begin
@@ -71,6 +76,9 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
 
    label(29,864,20,5);
    label(4,16,562,8);
+   label(64,520,562,8);
+   if(in_rect(x,y,520,562,712,586))
+    foreground=!latency_valid?24'h8a96a5:(latency_frames<=2)?24'h16b8ad:(latency_frames<=4)?24'hffaa55:24'hdd6464;
    if(!online)label(26,736,562,5);
   end else begin
    if(x>=560)background=24'h111e2c;

@@ -2,6 +2,7 @@
 module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/wb_ui_font.hex")(
  input wire I_clk,I_rst_n,input wire [38:0] I_config,
  input wire [36:0] I_telemetry,
+ input wire [8:0] I_latency,
  input wire I_vsync,I_hsync,I_de,input wire [23:0] I_data,
  output reg O_vsync,O_hsync,O_de,output reg [23:0] O_data
 );
@@ -16,6 +17,10 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [38:0] active=(pending||frame_start)?I_config:cfg;
  reg [36:0] telemetry_cfg;
  wire [36:0] telemetry=(pending||frame_start)?I_telemetry:telemetry_cfg;
+ reg [8:0] latency_cfg;
+ wire [8:0] latency=(pending||frame_start)?I_latency:latency_cfg;
+ wire latency_valid=latency[8];
+ wire [7:0] latency_frames=latency[7:0];
  wire signed [4:0] ab=active[37:33],gm=active[32:28];
  wire signed [10:0] point_x=11'sd800+$signed(ab)*11'sd14;
  wire signed [10:0] point_y=11'sd300-$signed(gm)*11'sd14;
@@ -35,7 +40,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [10:0] thumb_x=11'd600+index*11'd5;
  wire [10:0] gain_x=11'd600+gain_level*11'd5;
  always @(posedge I_clk or negedge I_rst_n)
- if(!I_rst_n)begin telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
+ if(!I_rst_n)begin latency_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
  else begin
   vs_d<=I_vsync;de_d<=I_de;
   if(frame_start)begin x_count<=I_de?11'd1:11'd0;y_count<=0;pending<=1;end
@@ -43,406 +48,410 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
    if(I_de)x_count<=x_count+1'b1;else x_count<=0;
    if(de_d&&!I_de)y_count<=y_count+1'b1;
   end
-  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;pending<=0;end
+  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;pending<=0;end
  end
-     localparam [7:0] DIGIT_0=8'd3;
-    localparam [7:0] DIGIT_1=8'd4;
-    localparam [7:0] DIGIT_7=8'd10;
-    localparam [7:0] DIGIT_3=8'd6;
-    localparam [7:0] LETTER_K=8'd17;
-    localparam [7:0] CHAR_ZENG=8'd47;
-    localparam [7:0] CHAR_YI=8'd101;
-    localparam [7:0] CHAR_SLASH=8'd2;
-    localparam [7:0] CHAR_DOT=8'd1;
-    localparam [7:0] CHAR_BEI=8'd24;
-    localparam [7:0] CHAR_R=8'd20;
-    localparam [7:0] CHAR_G=8'd16;
-    localparam [7:0] CHAR_B=8'd14;
-    localparam [7:0] CHAR_A=8'd13;
-    localparam [7:0] CHAR_M=8'd18;
-    localparam [7:0] CHAR_AN=8'd72;
-    localparam [7:0] CHAR_JIAN=8'd135;
+     localparam [7:0] DIGIT_0=8'd4;
+    localparam [7:0] DIGIT_1=8'd5;
+    localparam [7:0] DIGIT_7=8'd11;
+    localparam [7:0] DIGIT_3=8'd7;
+    localparam [7:0] LETTER_K=8'd18;
+    localparam [7:0] CHAR_ZENG=8'd48;
+    localparam [7:0] CHAR_YI=8'd103;
+    localparam [7:0] CHAR_SLASH=8'd3;
+    localparam [7:0] CHAR_DOT=8'd2;
+    localparam [7:0] CHAR_MINUS=8'd1;
+    localparam [7:0] CHAR_BEI=8'd25;
+    localparam [7:0] CHAR_R=8'd21;
+    localparam [7:0] CHAR_G=8'd17;
+    localparam [7:0] CHAR_B=8'd15;
+    localparam [7:0] CHAR_A=8'd14;
+    localparam [7:0] CHAR_M=8'd19;
+    localparam [7:0] CHAR_AN=8'd74;
+    localparam [7:0] CHAR_JIAN=8'd138;
+    localparam [7:0] CHAR_YAN=8'd61;
+    localparam [7:0] CHAR_CHI=8'd134;
+    localparam [7:0] CHAR_ZHEN=8'd56;
     function [7:0] digit_glyph(input [3:0] n);begin case(n)
-        4'd0:digit_glyph=8'd3;
-        4'd1:digit_glyph=8'd4;
-        4'd2:digit_glyph=8'd5;
-        4'd3:digit_glyph=8'd6;
-        4'd4:digit_glyph=8'd7;
-        4'd5:digit_glyph=8'd8;
-        4'd6:digit_glyph=8'd9;
-        4'd7:digit_glyph=8'd10;
-        4'd8:digit_glyph=8'd11;
-        4'd9:digit_glyph=8'd12;
+        4'd0:digit_glyph=8'd4;
+        4'd1:digit_glyph=8'd5;
+        4'd2:digit_glyph=8'd6;
+        4'd3:digit_glyph=8'd7;
+        4'd4:digit_glyph=8'd8;
+        4'd5:digit_glyph=8'd9;
+        4'd6:digit_glyph=8'd10;
+        4'd7:digit_glyph=8'd11;
+        4'd8:digit_glyph=8'd12;
+        4'd9:digit_glyph=8'd13;
         default:digit_glyph=8'd0;endcase end endfunction
-    function [7:0] glyph(input [5:0] text_id,input [5:0] pos);
+    function [7:0] glyph(input [6:0] text_id,input [5:0] pos);
         begin
             glyph=8'd0;
             case(text_id)
-            6'd0:case(pos)
-                6'd0:glyph=8'd100;
-                6'd1:glyph=8'd56;
-                6'd2:glyph=8'd116;
-                6'd3:glyph=8'd92;
-                6'd4:glyph=8'd103;
+            7'd0:case(pos)
+                6'd0:glyph=8'd102;
+                6'd1:glyph=8'd57;
+                6'd2:glyph=8'd118;
+                6'd3:glyph=8'd94;
+                6'd4:glyph=8'd105;
                 default:;endcase
-            6'd1:case(pos)
-                6'd0:glyph=8'd84;
-                6'd1:glyph=8'd61;
+            7'd1:case(pos)
+                6'd0:glyph=8'd86;
+                6'd1:glyph=8'd63;
+                6'd2:glyph=8'd148;
+                6'd3:glyph=8'd115;
+                6'd4:glyph=8'd37;
+                default:;endcase
+            7'd2:case(pos)
+                6'd0:glyph=8'd86;
+                6'd1:glyph=8'd63;
+                6'd2:glyph=8'd148;
+                6'd3:glyph=8'd99;
+                6'd4:glyph=8'd47;
+                6'd5:glyph=8'd145;
+                6'd6:glyph=8'd125;
+                default:;endcase
+            7'd3:case(pos)
+                6'd0:glyph=8'd86;
+                6'd1:glyph=8'd63;
+                6'd2:glyph=8'd148;
+                6'd3:glyph=8'd115;
+                6'd4:glyph=8'd51;
+                6'd5:glyph=8'd23;
+                default:;endcase
+            7'd4:case(pos)
+                6'd0:glyph=8'd140;
+                6'd1:glyph=8'd74;
+                6'd2:glyph=8'd101;
+                6'd3:glyph=8'd144;
+                6'd4:glyph=8'd132;
+                6'd5:glyph=8'd30;
+                6'd6:glyph=8'd125;
+                6'd7:glyph=8'd113;
+                default:;endcase
+            7'd5:case(pos)
+                6'd0:glyph=8'd45;
+                6'd1:glyph=8'd135;
+                default:;endcase
+            7'd6:case(pos)
+                6'd0:glyph=8'd102;
+                6'd1:glyph=8'd57;
+                6'd2:glyph=8'd118;
+                6'd3:glyph=8'd125;
+                6'd4:glyph=8'd113;
+                default:;endcase
+            7'd7:case(pos)
+                6'd0:glyph=8'd115;
+                6'd1:glyph=8'd37;
+                6'd2:glyph=8'd102;
+                6'd3:glyph=8'd57;
+                6'd4:glyph=8'd118;
+                default:;endcase
+            7'd8:case(pos)
+                6'd0:glyph=8'd99;
+                6'd1:glyph=8'd47;
                 6'd2:glyph=8'd145;
-                6'd3:glyph=8'd113;
-                6'd4:glyph=8'd36;
+                6'd3:glyph=8'd125;
                 default:;endcase
-            6'd2:case(pos)
-                6'd0:glyph=8'd84;
-                6'd1:glyph=8'd61;
-                6'd2:glyph=8'd145;
-                6'd3:glyph=8'd97;
-                6'd4:glyph=8'd46;
-                6'd5:glyph=8'd142;
-                6'd6:glyph=8'd123;
+            7'd9:case(pos)
+                6'd0:glyph=8'd71;
+                6'd1:glyph=8'd37;
+                6'd2:glyph=8'd102;
+                6'd3:glyph=8'd57;
+                6'd4:glyph=8'd118;
                 default:;endcase
-            6'd3:case(pos)
-                6'd0:glyph=8'd84;
-                6'd1:glyph=8'd61;
-                6'd2:glyph=8'd145;
-                6'd3:glyph=8'd113;
-                6'd4:glyph=8'd50;
-                6'd5:glyph=8'd22;
+            7'd10:case(pos)
+                6'd0:glyph=8'd70;
+                6'd1:glyph=8'd29;
+                6'd2:glyph=8'd60;
                 default:;endcase
-            6'd4:case(pos)
+            7'd11:case(pos)
+                6'd0:glyph=8'd115;
+                6'd1:glyph=8'd37;
+                6'd2:glyph=8'd86;
+                6'd3:glyph=8'd63;
+                6'd4:glyph=8'd55;
+                6'd5:glyph=8'd44;
+                6'd6:glyph=8'd100;
+                default:;endcase
+            7'd12:case(pos)
+                6'd0:glyph=8'd115;
+                6'd1:glyph=8'd37;
+                6'd2:glyph=8'd136;
+                6'd3:glyph=8'd59;
+                6'd4:glyph=8'd99;
+                6'd5:glyph=8'd47;
+                6'd6:glyph=8'd29;
+                default:;endcase
+            7'd13:case(pos)
+                6'd0:glyph=8'd33;
+                6'd1:glyph=8'd75;
+                6'd2:glyph=8'd29;
+                6'd3:glyph=8'd91;
+                6'd4:glyph=8'd43;
+                6'd5:glyph=8'd107;
+                6'd6:glyph=8'd26;
+                default:;endcase
+            7'd14:case(pos)
                 6'd0:glyph=8'd137;
-                6'd1:glyph=8'd72;
-                6'd2:glyph=8'd99;
-                6'd3:glyph=8'd141;
-                6'd4:glyph=8'd130;
-                6'd5:glyph=8'd29;
-                6'd6:glyph=8'd123;
-                6'd7:glyph=8'd111;
-                default:;endcase
-            6'd5:case(pos)
-                6'd0:glyph=8'd44;
-                6'd1:glyph=8'd132;
-                default:;endcase
-            6'd6:case(pos)
-                6'd0:glyph=8'd100;
-                6'd1:glyph=8'd56;
-                6'd2:glyph=8'd116;
-                6'd3:glyph=8'd123;
-                6'd4:glyph=8'd111;
-                default:;endcase
-            6'd7:case(pos)
-                6'd0:glyph=8'd113;
-                6'd1:glyph=8'd36;
-                6'd2:glyph=8'd100;
-                6'd3:glyph=8'd56;
-                6'd4:glyph=8'd116;
-                default:;endcase
-            6'd8:case(pos)
-                6'd0:glyph=8'd97;
-                6'd1:glyph=8'd46;
-                6'd2:glyph=8'd142;
-                6'd3:glyph=8'd123;
-                default:;endcase
-            6'd9:case(pos)
-                6'd0:glyph=8'd69;
-                6'd1:glyph=8'd36;
-                6'd2:glyph=8'd100;
-                6'd3:glyph=8'd56;
-                6'd4:glyph=8'd116;
-                default:;endcase
-            6'd10:case(pos)
-                6'd0:glyph=8'd68;
-                6'd1:glyph=8'd28;
-                6'd2:glyph=8'd59;
-                default:;endcase
-            6'd11:case(pos)
-                6'd0:glyph=8'd113;
-                6'd1:glyph=8'd36;
-                6'd2:glyph=8'd84;
-                6'd3:glyph=8'd61;
-                6'd4:glyph=8'd54;
-                6'd5:glyph=8'd43;
-                6'd6:glyph=8'd98;
-                default:;endcase
-            6'd12:case(pos)
-                6'd0:glyph=8'd113;
-                6'd1:glyph=8'd36;
-                6'd2:glyph=8'd133;
-                6'd3:glyph=8'd58;
-                6'd4:glyph=8'd97;
-                6'd5:glyph=8'd46;
-                6'd6:glyph=8'd28;
-                default:;endcase
-            6'd13:case(pos)
-                6'd0:glyph=8'd32;
                 6'd1:glyph=8'd73;
-                6'd2:glyph=8'd28;
-                6'd3:glyph=8'd89;
-                6'd4:glyph=8'd42;
-                6'd5:glyph=8'd105;
-                6'd6:glyph=8'd25;
+                6'd2:glyph=8'd29;
+                6'd3:glyph=8'd97;
+                6'd4:glyph=8'd99;
+                6'd5:glyph=8'd47;
                 default:;endcase
-            6'd14:case(pos)
-                6'd0:glyph=8'd134;
-                6'd1:glyph=8'd71;
-                6'd2:glyph=8'd28;
-                6'd3:glyph=8'd95;
-                6'd4:glyph=8'd97;
-                6'd5:glyph=8'd46;
-                default:;endcase
-            6'd15:case(pos)
-                6'd0:glyph=8'd78;
-                6'd1:glyph=8'd114;
-                6'd2:glyph=8'd94;
-                6'd3:glyph=8'd28;
+            7'd15:case(pos)
+                6'd0:glyph=8'd80;
+                6'd1:glyph=8'd116;
+                6'd2:glyph=8'd96;
+                6'd3:glyph=8'd29;
                 6'd4:glyph=8'd0;
-                6'd5:glyph=8'd6;
-                6'd6:glyph=8'd3;
-                6'd7:glyph=8'd3;
-                6'd8:glyph=8'd3;
-                6'd9:glyph=8'd17;
+                6'd5:glyph=8'd7;
+                6'd6:glyph=8'd4;
+                6'd7:glyph=8'd4;
+                6'd8:glyph=8'd4;
+                6'd9:glyph=8'd18;
                 default:;endcase
-            6'd16:case(pos)
-                6'd0:glyph=8'd76;
-                6'd1:glyph=8'd28;
-                6'd2:glyph=8'd0;
-                6'd3:glyph=8'd8;
-                6'd4:glyph=8'd8;
-                6'd5:glyph=8'd3;
-                6'd6:glyph=8'd3;
-                6'd7:glyph=8'd17;
-                default:;endcase
-            6'd17:case(pos)
-                6'd0:glyph=8'd139;
-                6'd1:glyph=8'd49;
+            7'd16:case(pos)
+                6'd0:glyph=8'd78;
+                6'd1:glyph=8'd29;
                 6'd2:glyph=8'd0;
                 6'd3:glyph=8'd9;
-                6'd4:glyph=8'd8;
-                6'd5:glyph=8'd3;
-                6'd6:glyph=8'd3;
-                6'd7:glyph=8'd17;
+                6'd4:glyph=8'd9;
+                6'd5:glyph=8'd4;
+                6'd6:glyph=8'd4;
+                6'd7:glyph=8'd18;
                 default:;endcase
-            6'd18:case(pos)
-                6'd0:glyph=8'd139;
-                6'd1:glyph=8'd65;
+            7'd17:case(pos)
+                6'd0:glyph=8'd142;
+                6'd1:glyph=8'd50;
                 6'd2:glyph=8'd0;
                 6'd3:glyph=8'd10;
-                6'd4:glyph=8'd8;
-                6'd5:glyph=8'd3;
-                6'd6:glyph=8'd3;
-                6'd7:glyph=8'd17;
+                6'd4:glyph=8'd9;
+                6'd5:glyph=8'd4;
+                6'd6:glyph=8'd4;
+                6'd7:glyph=8'd18;
                 default:;endcase
-            6'd19:case(pos)
-                6'd0:glyph=8'd70;
-                6'd1:glyph=8'd36;
-                6'd2:glyph=8'd90;
-                6'd3:glyph=8'd81;
-                6'd4:glyph=8'd125;
-                6'd5:glyph=8'd115;
-                6'd6:glyph=8'd114;
-                6'd7:glyph=8'd88;
-                default:;endcase
-            6'd20:case(pos)
-                6'd0:glyph=8'd5;
-                6'd1:glyph=8'd8;
-                6'd2:glyph=8'd3;
-                6'd3:glyph=8'd3;
-                6'd4:glyph=8'd17;
-                default:;endcase
-            6'd21:case(pos)
-                6'd0:glyph=8'd4;
-                6'd1:glyph=8'd3;
-                6'd2:glyph=8'd3;
-                6'd3:glyph=8'd3;
-                6'd4:glyph=8'd3;
-                6'd5:glyph=8'd17;
-                default:;endcase
-            6'd22:case(pos)
-                6'd0:glyph=8'd68;
-                6'd1:glyph=8'd28;
-                6'd2:glyph=8'd59;
-                default:;endcase
-            6'd23:case(pos)
-                6'd0:glyph=8'd31;
-                6'd1:glyph=8'd52;
-                default:;endcase
-            6'd24:case(pos)
-                6'd0:glyph=8'd47;
-                6'd1:glyph=8'd35;
-                default:;endcase
-            6'd25:case(pos)
-                6'd0:glyph=8'd67;
-                6'd1:glyph=8'd48;
-                6'd2:glyph=8'd144;
-                6'd3:glyph=8'd122;
-                default:;endcase
-            6'd26:case(pos)
-                6'd0:glyph=8'd120;
-                6'd1:glyph=8'd53;
-                6'd2:glyph=8'd80;
-                6'd3:glyph=8'd131;
-                6'd4:glyph=8'd74;
-                default:;endcase
-            6'd27:case(pos)
-                6'd0:glyph=8'd51;
-                6'd1:glyph=8'd77;
-                6'd2:glyph=8'd142;
-                6'd3:glyph=8'd118;
-                default:;endcase
-            6'd30:case(pos)
-                6'd0:glyph=8'd86;
-                6'd1:glyph=8'd83;
+            7'd18:case(pos)
+                6'd0:glyph=8'd142;
+                6'd1:glyph=8'd67;
                 6'd2:glyph=8'd0;
+                6'd3:glyph=8'd11;
+                6'd4:glyph=8'd9;
+                6'd5:glyph=8'd4;
+                6'd6:glyph=8'd4;
+                6'd7:glyph=8'd18;
+                default:;endcase
+            7'd19:case(pos)
+                6'd0:glyph=8'd72;
+                6'd1:glyph=8'd37;
+                6'd2:glyph=8'd92;
+                6'd3:glyph=8'd83;
+                6'd4:glyph=8'd127;
+                6'd5:glyph=8'd117;
+                6'd6:glyph=8'd116;
+                6'd7:glyph=8'd90;
+                default:;endcase
+            7'd20:case(pos)
+                6'd0:glyph=8'd6;
+                6'd1:glyph=8'd9;
+                6'd2:glyph=8'd4;
                 6'd3:glyph=8'd4;
-                6'd4:glyph=8'd3;
-                6'd5:glyph=8'd3;
-                6'd6:glyph=8'd17;
+                6'd4:glyph=8'd18;
                 default:;endcase
-            6'd31:case(pos)
-                6'd0:glyph=8'd51;
-                6'd1:glyph=8'd23;
-                6'd2:glyph=8'd72;
-                6'd3:glyph=8'd135;
-                6'd4:glyph=8'd41;
-                6'd5:glyph=8'd85;
-                6'd6:glyph=8'd40;
-                6'd7:glyph=8'd98;
-                default:;endcase
-            6'd32:case(pos)
-                6'd0:glyph=8'd4;
-                6'd1:glyph=8'd24;
-                default:;endcase
-            6'd33:case(pos)
+            7'd21:case(pos)
                 6'd0:glyph=8'd5;
+                6'd1:glyph=8'd4;
+                6'd2:glyph=8'd4;
+                6'd3:glyph=8'd4;
+                6'd4:glyph=8'd4;
+                6'd5:glyph=8'd18;
+                default:;endcase
+            7'd22:case(pos)
+                6'd0:glyph=8'd70;
+                6'd1:glyph=8'd29;
+                6'd2:glyph=8'd60;
+                default:;endcase
+            7'd23:case(pos)
+                6'd0:glyph=8'd32;
+                6'd1:glyph=8'd53;
+                default:;endcase
+            7'd24:case(pos)
+                6'd0:glyph=8'd48;
+                6'd1:glyph=8'd36;
+                default:;endcase
+            7'd25:case(pos)
+                6'd0:glyph=8'd69;
+                6'd1:glyph=8'd49;
+                6'd2:glyph=8'd147;
+                6'd3:glyph=8'd124;
+                default:;endcase
+            7'd26:case(pos)
+                6'd0:glyph=8'd122;
+                6'd1:glyph=8'd54;
+                6'd2:glyph=8'd82;
+                6'd3:glyph=8'd133;
+                6'd4:glyph=8'd76;
+                default:;endcase
+            7'd27:case(pos)
+                6'd0:glyph=8'd52;
+                6'd1:glyph=8'd79;
+                6'd2:glyph=8'd145;
+                6'd3:glyph=8'd120;
+                default:;endcase
+            7'd30:case(pos)
+                6'd0:glyph=8'd88;
+                6'd1:glyph=8'd85;
+                6'd2:glyph=8'd0;
+                6'd3:glyph=8'd5;
+                6'd4:glyph=8'd4;
+                6'd5:glyph=8'd4;
+                6'd6:glyph=8'd18;
+                default:;endcase
+            7'd31:case(pos)
+                6'd0:glyph=8'd52;
                 6'd1:glyph=8'd24;
+                6'd2:glyph=8'd74;
+                6'd3:glyph=8'd138;
+                6'd4:glyph=8'd42;
+                6'd5:glyph=8'd87;
+                6'd6:glyph=8'd41;
+                6'd7:glyph=8'd100;
                 default:;endcase
-            6'd34:case(pos)
-                6'd0:glyph=8'd7;
-                6'd1:glyph=8'd24;
+            7'd32:case(pos)
+                6'd0:glyph=8'd5;
+                6'd1:glyph=8'd25;
                 default:;endcase
-            6'd35:case(pos)
-                6'd0:glyph=8'd102;
-                6'd1:glyph=8'd82;
-                6'd2:glyph=8'd124;
-                6'd3:glyph=8'd33;
+            7'd33:case(pos)
+                6'd0:glyph=8'd6;
+                6'd1:glyph=8'd25;
                 default:;endcase
-            6'd36:case(pos)
-                6'd0:glyph=8'd60;
-                6'd1:glyph=8'd43;
+            7'd34:case(pos)
+                6'd0:glyph=8'd8;
+                6'd1:glyph=8'd25;
                 default:;endcase
-            6'd37:case(pos)
-                6'd0:glyph=8'd30;
-                6'd1:glyph=8'd138;
+            7'd35:case(pos)
+                6'd0:glyph=8'd104;
+                6'd1:glyph=8'd84;
+                6'd2:glyph=8'd126;
+                6'd3:glyph=8'd34;
                 default:;endcase
-            6'd38:case(pos)
-                6'd0:glyph=8'd117;
-                6'd1:glyph=8'd119;
-                6'd2:glyph=8'd47;
-                6'd3:glyph=8'd62;
+            7'd36:case(pos)
+                6'd0:glyph=8'd62;
+                6'd1:glyph=8'd44;
                 default:;endcase
-            6'd39:case(pos)
-                6'd0:glyph=8'd114;
-                6'd1:glyph=8'd64;
-                6'd2:glyph=8'd26;
-                6'd3:glyph=8'd104;
+            7'd37:case(pos)
+                6'd0:glyph=8'd31;
+                6'd1:glyph=8'd141;
                 default:;endcase
-            6'd40:case(pos)
-                6'd0:glyph=8'd63;
-                6'd1:glyph=8'd140;
-                default:;endcase
-            6'd41:case(pos)
-                6'd0:glyph=8'd109;
+            7'd38:case(pos)
+                6'd0:glyph=8'd119;
                 6'd1:glyph=8'd121;
-                6'd2:glyph=8'd79;
-                6'd3:glyph=8'd75;
+                6'd2:glyph=8'd48;
+                6'd3:glyph=8'd64;
                 default:;endcase
-            6'd42:case(pos)
-                6'd0:glyph=8'd107;
+            7'd39:case(pos)
+                6'd0:glyph=8'd116;
                 6'd1:glyph=8'd66;
-                6'd2:glyph=8'd106;
-                6'd3:glyph=8'd50;
-                6'd4:glyph=8'd55;
+                6'd2:glyph=8'd27;
+                6'd3:glyph=8'd106;
                 default:;endcase
-            6'd43:case(pos)
+            7'd40:case(pos)
+                6'd0:glyph=8'd65;
+                6'd1:glyph=8'd143;
+                default:;endcase
+            7'd41:case(pos)
+                6'd0:glyph=8'd111;
+                6'd1:glyph=8'd123;
+                6'd2:glyph=8'd81;
+                6'd3:glyph=8'd77;
+                default:;endcase
+            7'd42:case(pos)
+                6'd0:glyph=8'd109;
+                6'd1:glyph=8'd68;
+                6'd2:glyph=8'd108;
+                6'd3:glyph=8'd51;
+                6'd4:glyph=8'd56;
+                default:;endcase
+            7'd43:case(pos)
+                6'd0:glyph=8'd15;
+                default:;endcase
+            7'd44:case(pos)
                 6'd0:glyph=8'd14;
                 default:;endcase
-            6'd44:case(pos)
-                6'd0:glyph=8'd13;
+            7'd45:case(pos)
+                6'd0:glyph=8'd17;
                 default:;endcase
-            6'd45:case(pos)
-                6'd0:glyph=8'd16;
-                default:;endcase
-            6'd46:case(pos)
-                6'd0:glyph=8'd18;
-                default:;endcase
-            6'd53:case(pos)
-                6'd0:glyph=8'd91;
-                6'd1:glyph=8'd136;
-                6'd2:glyph=8'd57;
-                default:;endcase
-            6'd54:case(pos)
-                6'd0:glyph=8'd34;
-                6'd1:glyph=8'd112;
-                6'd2:glyph=8'd57;
-                default:;endcase
-            6'd55:case(pos)
-                6'd0:glyph=8'd38;
-                6'd1:glyph=8'd45;
-                default:;endcase
-            6'd56:case(pos)
-                6'd0:glyph=8'd143;
-                6'd1:glyph=8'd100;
-                default:;endcase
-            6'd57:case(pos)
-                6'd0:glyph=8'd36;
-                6'd1:glyph=8'd93;
-                default:;endcase
-            6'd58:case(pos)
-                6'd0:glyph=8'd126;
-                6'd1:glyph=8'd96;
-                default:;endcase
-            6'd59:case(pos)
-                6'd0:glyph=8'd27;
-                6'd1:glyph=8'd108;
-                6'd2:glyph=8'd99;
-                default:;endcase
-            6'd60:case(pos)
-                6'd0:glyph=8'd129;
-                6'd1:glyph=8'd110;
-                default:;endcase
-            6'd61:case(pos)
+            7'd46:case(pos)
                 6'd0:glyph=8'd19;
-                6'd1:glyph=8'd21;
-                6'd2:glyph=8'd15;
+                default:;endcase
+            7'd53:case(pos)
+                6'd0:glyph=8'd93;
+                6'd1:glyph=8'd139;
+                6'd2:glyph=8'd58;
+                default:;endcase
+            7'd54:case(pos)
+                6'd0:glyph=8'd35;
+                6'd1:glyph=8'd114;
+                6'd2:glyph=8'd58;
+                default:;endcase
+            7'd55:case(pos)
+                6'd0:glyph=8'd39;
+                6'd1:glyph=8'd46;
+                default:;endcase
+            7'd56:case(pos)
+                6'd0:glyph=8'd146;
+                6'd1:glyph=8'd102;
+                default:;endcase
+            7'd57:case(pos)
+                6'd0:glyph=8'd37;
+                6'd1:glyph=8'd95;
+                default:;endcase
+            7'd58:case(pos)
+                6'd0:glyph=8'd128;
+                6'd1:glyph=8'd98;
+                default:;endcase
+            7'd59:case(pos)
+                6'd0:glyph=8'd28;
+                6'd1:glyph=8'd110;
+                6'd2:glyph=8'd101;
+                default:;endcase
+            7'd60:case(pos)
+                6'd0:glyph=8'd131;
+                6'd1:glyph=8'd112;
+                default:;endcase
+            7'd61:case(pos)
+                6'd0:glyph=8'd20;
+                6'd1:glyph=8'd22;
+                6'd2:glyph=8'd16;
                 6'd3:glyph=8'd0;
-                6'd4:glyph=8'd87;
-                6'd5:glyph=8'd37;
+                6'd4:glyph=8'd89;
+                6'd5:glyph=8'd38;
                 default:;endcase
-            6'd62:case(pos)
-                6'd0:glyph=8'd102;
-                6'd1:glyph=8'd82;
-                6'd2:glyph=8'd127;
-                6'd3:glyph=8'd128;
+            7'd62:case(pos)
+                6'd0:glyph=8'd104;
+                6'd1:glyph=8'd84;
+                6'd2:glyph=8'd129;
+                6'd3:glyph=8'd130;
                 default:;endcase
-            6'd63:case(pos)
-                6'd0:glyph=8'd48;
-                6'd1:glyph=8'd39;
+            7'd63:case(pos)
+                6'd0:glyph=8'd49;
+                6'd1:glyph=8'd40;
                 default:;endcase
-            6'd28:case(pos)
+            7'd28:case(pos)
                 0:if(k_units>=100)glyph=DIGIT_1;
                 1:glyph=digit_glyph((k_units/10)%10);
                 2:glyph=digit_glyph(k_units%10);
                 3,4:glyph=DIGIT_0;
                 5:glyph=LETTER_K;
                 default:;endcase
-            6'd29:case(pos)
+            7'd29:case(pos)
                 0:glyph=digit_glyph(gain100/100);
                 1:glyph=CHAR_DOT;
                 2:glyph=digit_glyph((gain100/10)%10);
                 3:glyph=digit_glyph(gain100%10);
                 4:glyph=CHAR_BEI;
                 default:;endcase
-            6'd47,6'd48,6'd49:case(pos)
+            7'd47,7'd48,7'd49:case(pos)
                 0:glyph=(text_id==47)?CHAR_R:(text_id==48)?CHAR_G:CHAR_B;
                 2:glyph=digit_glyph(((text_id==47)?tr100:(text_id==48)?tg100:tb100)/100);
                 3:glyph=CHAR_DOT;
@@ -450,18 +459,25 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
                 5:glyph=digit_glyph(((text_id==47)?tr100:(text_id==48)?tg100:tb100)%10);
                 6:glyph=CHAR_BEI;
                 default:;endcase
-            6'd52:case(pos)
+            7'd52:case(pos)
                 0:glyph=CHAR_AN;1:glyph=CHAR_JIAN;
                 3:glyph=active[38]?CHAR_G:CHAR_B;
                 4:glyph=active[38]?CHAR_M:CHAR_A;
                 default:;endcase
-            6'd50:case(pos)
+            7'd50:case(pos)
                 0:glyph=ab<0?CHAR_B:CHAR_A;
                 1:glyph=digit_glyph(ab<0?-ab:ab);
                 default:;endcase
-            6'd51:case(pos)
+            7'd51:case(pos)
                 0:glyph=gm<0?CHAR_M:CHAR_G;
                 1:glyph=digit_glyph(gm<0?-gm:gm);
+                default:;endcase
+            7'd64:case(pos)
+                0:glyph=CHAR_YAN;1:glyph=CHAR_CHI;
+                3:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=100)?digit_glyph(latency_frames/100):8'd0;
+                4:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=10)?digit_glyph((latency_frames/10)%10):8'd0;
+                5:glyph=!latency_valid?CHAR_MINUS:digit_glyph(latency_frames%10);
+                7:glyph=CHAR_ZHEN;
                 default:;endcase
             default:;
             endcase
@@ -473,14 +489,14 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  endfunction
  reg [23:0] background,foreground;
  reg text_on;
- reg [5:0] text_id;
+ reg [6:0] text_id;
  reg [10:0] origin_x,origin_y;
  reg [10:0] dx,dy;
  reg [5:0] char_pos;
  reg [4:0] char_col,char_row;
  reg [7:0] char_glyph;
  reg [12:0] font_addr;
- task automatic label(input [5:0] id,input integer lx,ly,length);
+ task automatic label(input [6:0] id,input integer lx,ly,length);
   begin if(in_rect(x,y,lx,ly,lx+length*24,ly+24))begin text_on=1;text_id=id;origin_x=lx;origin_y=ly;end end
  endtask
  always @(*)begin
@@ -493,6 +509,9 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
 
    label(29,864,20,5);
    label(4,16,562,8);
+   label(64,520,562,8);
+   if(in_rect(x,y,520,562,712,586))
+    foreground=!latency_valid?24'h8a96a5:(latency_frames<=2)?24'h16b8ad:(latency_frames<=4)?24'hffaa55:24'hdd6464;
    if(!online)label(26,736,562,5);
   end else begin
    if(x>=560)background=24'h111e2c;

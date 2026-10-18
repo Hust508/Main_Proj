@@ -3,9 +3,10 @@ module frame_store_tb;
  reg cam=0,ddr=0;always #7 cam=~cam;always #5 ddr=~ddr;
  reg rst=0,sof=0,v=0,bad=0,release_frame=0,stall=0;reg [127:0] data=0;
  wire wr,busy,front;wire [1:0] rp;wire [24:0] addr;wire [127:0] wd;wire [31:0] good,dropped,overflow;
+ wire [63:0] slot_sequences;wire [15:0] capture_sequence;
  integer cycle=0;reg [25:0] pending=0;wire ready=rst&&!stall&&(cycle%9!=0);
  video_in #(.FRAME_WORDS(768)) dut(.I_rst_n(rst),.I_camera_clk(cam),.I_camera_frame_start(sof),
- .I_camera_mode(3'd0),.O_slot_modes(),.I_camera_valid(v),.I_camera_data(data),.I_mipi_rx_error(bad),
+ .I_camera_mode(3'd0),.O_slot_modes(),.O_slot_sequences(slot_sequences),.O_capture_sequence(capture_sequence),.I_camera_valid(v),.I_camera_data(data),.I_mipi_rx_error(bad),
  .I_ddr_clk(ddr),.I_display_pause(1'b0),.I_video_out_rd_busy(1'b0),.I_display_frame_release(release_frame),
  .I_ddr_writes_idle(pending==0&&!wr),.O_video_in_wr_busy(busy),.O_video_out_rp(rp),.O_front_valid(front),
  .O_ddr_user_wr_en(wr),.O_ddr_user_addr(addr),.O_ddr_user_wr_data(wd),.I_ddr_user_ready(ready),
@@ -38,16 +39,16 @@ module frame_store_tb;
   repeat(8)@(negedge cam);rst=1;
   start_frame(1,1);remaining(1,768);if(front)$fatal(1,"Unclosed frame visible");
   start_frame(2,0);remaining(2,767);display_boundary();
-  if(!front||good!=1||content[rp]!=1)$fatal(1,"First complete frame not selected");held_slot=rp;
+  if(!front||good!=1||content[rp]!=1||capture_sequence!=2||slot_sequences[rp*16+:16]!=1)$fatal(1,"First complete frame metadata");held_slot=rp;
   start_frame(3,0);remaining(3,768);display_boundary();if(rp!=held_slot||good!=1)$fatal(1,"Truncated frame selected");
   start_frame(4,1);remaining(4,768);display_boundary();if(rp!=held_slot||good!=1)$fatal(1,"RX error frame selected");
   start_frame(5,0);remaining(5,768);display_boundary();if(good!=2||content[rp]!=4)$fatal(1,"Recovery frame");
   // Slow DDR beyond FIFO capacity: drop this capture, then recover at a marker.
   stall=1;start_frame(6,0);remaining(6,768);stall=0;repeat(1200)@(negedge ddr);
   start_frame(7,0);remaining(7,768);display_boundary();if(overflow==0)$fatal(1,"No overflow injected");
-  start_frame(8,0);remaining(8,768);display_boundary();if(content[rp]!=7)$fatal(1,"No recovery after overflow");
+  start_frame(8,0);remaining(8,768);display_boundary();if(content[rp]!=7||capture_sequence!=8||slot_sequences[rp*16+:16]!=7)$fatal(1,"No recovery after overflow/sequence transport");
   if(dropped<3)$fatal(1,"Missing bad frame drops");
-  $display("PASS frame store: asynchronous SOF+first pixel, byte order, incomplete/RX-error rejection, MC drain, exclusive front/latest ownership, overflow/drop/recovery; %0d writes",count);$finish;
+  $display("PASS frame store: asynchronous SOF+first pixel, frame sequence metadata, byte order, incomplete/RX-error rejection, MC drain, exclusive front/latest ownership, overflow/drop/recovery; %0d writes",count);$finish;
  end
  initial begin #1000000;$fatal(1,"Frame store watchdog state=%d words=%d",dut.state,dut.words);end
 endmodule

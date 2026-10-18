@@ -42,3 +42,9 @@ set_max_delay -from [get_regs {u_video_in/fifo/rg[*]}] -to [get_regs {u_video_in
 set_false_path -hold -from [get_regs {u_video_in/fifo/rg[*]}] -to [get_regs {u_video_in/fifo/rg1[*]}]
 set_max_delay -from [get_regs {u_video_in/fifo/wg[*]}] -to [get_regs {u_video_in/fifo/wg1[*]}] -datapath_only 7.500
 set_false_path -hold -from [get_regs {u_video_in/fifo/wg[*]}] -to [get_regs {u_video_in/fifo/wg1[*]}]
+
+# BEGIN CAMERA_SEQUENCE_GRAY_CDC
+# The source SOF counter is converted to Gray code before entering the DDR
+# domain. Bound source-to-first-stage skew; the second stage remains timed.
+set_max_delay -from [get_regs {u_video_in/camera_sequence[*]}] -to [get_regs {u_video_in/sequence_gray_sync1[*]}] -datapath_only 7.500
+set_false_path -hold -from [get_regs {u_video_in/camera_sequence[*]}] -to [get_regs {u_video_in/sequence_gray_sync1[*]}]

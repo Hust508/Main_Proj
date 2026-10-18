@@ -6,6 +6,7 @@
 |---|---|
 | 详细整合说明、来源、复用和兼容变化 | [INTEGRATION_20261018.md](docs/INTEGRATION_20261018.md) |
 | 当前 UI / 操作与接口 | [统一版说明](docs/latest/README.md) |
+| 延迟指标、实现和验收方法 | [采集到显示的延迟可视化](docs/LATENCY_VISUALIZATION.md) |
 | TD 工程 | [wb_ui_dsi.al](project/td_project/wb_ui_dsi.al) |
 | 推荐下载镜像 | [DSI_UNIFIED_SC500_7inch_compress.bit](project/DSI_UNIFIED_SC500_7inch_compress.bit) |
 | 普通镜像 | [DSI_UNIFIED_SC500_7inch.bit](project/DSI_UNIFIED_SC500_7inch.bit) |
@@ -15,6 +16,7 @@
 - 白平衡：自动、环境预设、手动色温、B/A 与 G/M 色偏、感光度。
 - 滤镜库：原图、黑白、动漫、负片、像素画、边缘、复古、视觉增强。
 - 功能库：原版 OSD 水印、RGB 单一主目标的 BALL/CUBE/UNKNOWN 标注，分别开关。
+- 实时性：预览页底栏显示采集画面落后当前摄像头进度的帧数，并以绿 / 黄 / 红提示积压等级。
 - 动漫、边缘和视觉增强共用空间窗口与 Sobel；形状分类器按阶段复用乘法器。
 
 摄像头仍采集 1280×720，显示中心裁剪的 1024×600；引脚和原时钟定义保持不变，新增处理域的 FIFO 另有明确的数据路径上限。平台为 MLKPAI-F02 / FC02、PH1P35MDG324 Speed 3、SC500CS、DSI / GT911 屏。实体相机画质和触屏仍需上板验收。

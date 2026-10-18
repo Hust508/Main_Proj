@@ -139,7 +139,7 @@ module overlay_tb;
  reg clk=0;always #5 clk=~clk;
  reg rst=0,v=0,h=0,de=0;reg [23:0] rgb=0;reg [38:0] cfg=0;
  wire ov,oh,od;wire [23:0] data;
- wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) dut(.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),.I_clk(clk),.I_rst_n(rst),.I_config(cfg),
+ wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) dut(.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),.I_latency({1'b1,8'd2}),.I_clk(clk),.I_rst_n(rst),.I_config(cfg),
  .I_vsync(v),.I_hsync(h),.I_de(de),.I_data(rgb),.O_vsync(ov),.O_hsync(oh),.O_de(od),.O_data(data));
  reg vv=0,hh=0,dd=0;reg [23:0] old_rgb=0;
  integer fd=0,count=0,total=0,page,yy,xx;reg [3:0] pg;reg [1:0] md;

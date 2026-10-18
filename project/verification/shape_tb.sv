@@ -58,7 +58,7 @@ module shape_video_tb;
  end
  wire uv,uh,ud;wire [23:0] ui_data;
  wb_ui_overlay #(.FONT_FILE("../../user_source/hdl_source/ui/wb_ui_font.hex")) ui(
- .I_clk(clk),.I_rst_n(rst),.I_config(c3),.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),
+ .I_clk(clk),.I_rst_n(rst),.I_config(c3),.I_telemetry({1'b1,12'd1536,12'd1024,12'd768}),.I_latency(9'd0),
  .I_vsync(ov),.I_hsync(oh),.I_de(od),.I_data(data),.O_vsync(uv),.O_hsync(uh),.O_de(ud),.O_data(ui_data));
  reg [1023:0] mask_rows[0:599];reg [95:0] metadata[0:22];reg [95:0] meta;
  integer item,case_id,frame_no,xx,yy,fd=0,ui_fd=0,count=0,total=0;

@@ -247,6 +247,11 @@ module design_top_wrapper #(
     wire [3:0] S_ui_page;
     wire [2:0] S_image_mode,S_image_mode_camera,S_isp_frame_mode,S_ddr_frame_mode;
     wire [11:0] S_slot_modes;
+    wire [63:0] S_slot_sequences;
+    wire [15:0] S_capture_sequence;
+    wire [7:0] S_frame_latency;
+    wire S_frame_latency_valid;
+    wire [8:0] S_latency_display;
     wire [1:0] S_wb_mode,S_wb_preset;
     wire [6:0] S_wb_index,S_ui_gain,S_gain_camera;
     wire [18:0] S_wb_camera;
@@ -291,6 +296,9 @@ module design_top_wrapper #(
     config_mailbox #(.WIDTH(37),.RESET_VALUE({1'b0,12'd1024,12'd1024,12'd1024})) u_wb_telemetry (
         .I_src_clk(S_csi_rx_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
         .I_data(S_wb_telemetry),.O_data(S_wb_telemetry_display));
+    config_mailbox #(.WIDTH(9),.RESET_VALUE(9'd0)) u_latency_telemetry (
+        .I_src_clk(S_ddr_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
+        .I_data({S_frame_latency_valid,S_frame_latency}),.O_data(S_latency_display));
     always @(posedge S_10m_clk or negedge S_lp_reset_n) begin
         if (!S_lp_reset_n) S_delay_cnt <= 32'd0;
         else if (S_delay_cnt < 32'd10000000) S_delay_cnt <= S_delay_cnt + 1'b1;
@@ -801,6 +809,8 @@ isp_top u_isp_top (
         .I_camera_data        ( S_ISP_O_tdata  ),
         .I_camera_mode        ( S_isp_frame_mode ),
         .O_slot_modes         ( S_slot_modes ),
+        .O_slot_sequences     ( S_slot_sequences ),
+        .O_capture_sequence   ( S_capture_sequence ),
         .I_mipi_rx_error      ( S_process_bad[1]|S_filter_cdc_overflow ),
 
         .I_ddr_clk            ( S_ddr_clk             ),
@@ -842,7 +852,11 @@ isp_top u_isp_top (
         .I_front_valid(S_front_valid),.O_frame_release(S_frame_release),
         .O_underflow_frames(),.O_overflow_frames(),
         .I_slot_modes        ( S_slot_modes ),
+        .I_slot_sequences    ( S_slot_sequences ),
+        .I_capture_sequence  ( S_capture_sequence ),
         .O_frame_mode        ( S_ddr_frame_mode ),
+        .O_frame_latency     ( S_frame_latency ),
+        .O_frame_latency_valid(S_frame_latency_valid),
  
         .O_ddr_user_rd_en    ( S_vo_ddr_rd_en       ),
         .O_ddr_user_addr     ( S_vo_ddr_rd_addr     ),
@@ -998,6 +1012,7 @@ isp_top u_isp_top (
     wire S_ui_vsync,S_ui_hsync,S_ui_de;wire [23:0] S_ui_data;
     wb_ui_overlay u_wb_ui_overlay (
         .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),.I_config(S_ui_display_d3),.I_telemetry(S_wb_telemetry_display),
+        .I_latency(S_latency_display),
         .I_vsync(S_target_vsync),.I_hsync(S_target_hsync),.I_de(S_target_de),.I_data(S_target_data),
         .O_vsync(S_ui_vsync),.O_hsync(S_ui_hsync),.O_de(S_ui_de),.O_data(S_ui_data));
     // Exact touch123 watermark assets/coordinates/colors. Keep UI controls

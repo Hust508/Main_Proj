@@ -37,7 +37,7 @@ module camera_pipe_tb;
  .O_tdata(pd),.O_tlast(pl),.O_tuser(pu),.O_tvalid(pv));
  wire vb,rb,front,release_frame,writes_idle,ready,wr,rd;wire [1:0] rp;wire [24:0] wa,ra;wire [127:0] wd;
  wire [31:0] good,drops,overflows,underflows,display_overflows;
- video_in vin(.I_rst_n(rst),.I_camera_clk(cam),.I_camera_frame_start(pu),.I_camera_mode(3'd0),.O_slot_modes(),
+ video_in vin(.I_rst_n(rst),.I_camera_clk(cam),.I_camera_frame_start(pu),.I_camera_mode(3'd0),.O_slot_modes(),.O_slot_sequences(),.O_capture_sequence(),
  .I_camera_valid(pv),.I_camera_data(pd),.I_mipi_rx_error(previous_bad),.I_ddr_clk(ddr),.I_display_pause(1'b0),.I_video_out_rd_busy(rb),
  .I_display_frame_release(release_frame),.I_ddr_writes_idle(writes_idle),.O_video_in_wr_busy(vb),.O_video_out_rp(rp),.O_front_valid(front),
  .O_ddr_user_wr_en(wr),.O_ddr_user_addr(wa),.O_ddr_user_wr_data(wd),.I_ddr_user_ready(ready),
@@ -45,7 +45,7 @@ module camera_pipe_tb;
  reg vs=0,active=0;wire [23:0] pixel;wire rvalid;wire [127:0] rdata;
  video_out vout(.I_rst_n(rst),.I_ddr_clk(ddr),.O_video_out_rd_busy(rb),.I_video_in_wr_busy(vb),.I_video_out_rp(rp),
  .I_front_valid(front),.O_frame_release(release_frame),.O_underflow_frames(underflows),.O_overflow_frames(display_overflows),
- .I_slot_modes(12'd0),.O_frame_mode(),.O_ddr_user_rd_en(rd),.O_ddr_user_addr(ra),.I_ddr_user_ready(ready),
+ .I_slot_modes(12'd0),.I_slot_sequences(64'd0),.I_capture_sequence(16'd0),.O_frame_mode(),.O_frame_latency(),.O_frame_latency_valid(),.O_ddr_user_rd_en(rd),.O_ddr_user_addr(ra),.I_ddr_user_ready(ready),
  .I_ddr_user_rd_valid(rvalid),.I_ddr_user_rd_data(rdata),.I_dsi_clk(dsi),.I_video_vsync(vs),.I_video_rd_en(active),.O_vdieo_data(pixel));
  reg [127:0] memory[0:691199],return_data[0:30];reg [30:0] return_valid=0;
  wire appen,wren;wire [24:0] appaddr;wire [2:0] cmd;wire [127:0] appwd;
