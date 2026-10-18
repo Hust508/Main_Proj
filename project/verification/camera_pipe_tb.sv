@@ -32,7 +32,7 @@ module camera_pipe_tb;
  .I_data(raw),.I_data_valid(rv),.I_data_start(rfs),.I_data_end(rfe),.axis_tvalid(av),.axis_tdata(ad),.axis_tuser(au),.axis_tlast(al));
  reg [18:0] wb_cfg=30;
  wire pv,pu,pl;wire [127:0] pd;
- isp_top isp(.axi4s_video_aclk(cam),.I_rst_n(rst),.I_wb_config(wb_cfg),.I_image_mode(3'd0),.I_previous_bad(previous_bad),.O_frame_mode(),
+ isp_top isp(.I_process_clk(cam),.O_cdc_overflow(),.axi4s_video_aclk(cam),.I_rst_n(rst),.I_wb_config(wb_cfg),.I_image_mode(3'd0),.I_previous_bad(previous_bad),.O_frame_mode(),
  .I_tlast(al),.I_tuser(au),.I_tdata(ad),.I_tvalid(av),.I_tdest(10'd0),.O_tready(1'b1),.I_tready(),
  .O_tdata(pd),.O_tlast(pl),.O_tuser(pu),.O_tvalid(pv));
  wire vb,rb,front,release_frame,writes_idle,ready,wr,rd;wire [1:0] rp;wire [24:0] wa,ra;wire [127:0] wd;

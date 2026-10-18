@@ -1,36 +1,22 @@
-# 统一 UI、滤镜与 RGB 目标功能工程
+# 八滤镜、白平衡与原版 OSD 统一工程
 
-本目录是仓库的最新可构建工程。详细设计、合并取舍、页面热区、模块接口及限制见 [统一版设计/开发文档](../docs/latest/README.md)。
+本目录是 Main_Proj 的最新工程。详细架构、来源、复用、兼容变化见 [本次整合说明](../docs/INTEGRATION_20261018.md)，实际验证结果见 [构建报告](BUILD_REPORT.md)。
 
-## 上板操作
+1. 用 BitWriter 下载 `DSI_UNIFIED_SC500_7inch_compress.bit`。
+2. 初始化完成后，在预览画面固定单指长按约 0.8 秒打开设置。
+3. 滤镜库第四行新增“复古”和“视觉增强”，其余六项位置不变。
+4. 功能库第一行“OSD 水印”控制原安路 Logo、黄色文字与六位帧计数。设置页隐藏水印，返回预览显示；隐藏时继续计数。
+5. WB、色温、色偏、感光度与功能开关各自保持记忆。RGB 主目标功能建议在原图、干净背景和均匀照明下验收。
 
-1. 优先下载 `DSI_UNIFIED_SC500_7inch_compress.bit`。
-2. 等待摄像头和屏幕初始化，视频将以 1024×600 全屏显示。
-3. 在预览画面固定单指长按约 0.8 秒，进入右侧设置面板。
-4. 在“白平衡设置”底部进入“滤镜库”或“功能库”。
-5. 用所有页面左上角的“回退”返回；返回预览页后顶部会显示当前滤镜和可选水印。
-
-滤镜库包含原图、黑白、动漫、负片、像素画、边缘。功能库可独立开关水印和目标跟踪。目标跟踪适合在原图模式、浅色干净背景和均匀照明下测试；目标宽高建议至少 64～80 个屏幕像素。
-
-## 构建与检查
+滤镜菜单包括原图、黑白、动漫、负片、像素画、边缘、复古、视觉增强。水印不再是固定的 FPGA VISION 标签。统一 Sobel 改为逐像素居中窗口，边缘与动漫轮廓相对上一版会有变化。
 
 ```powershell
-./build.ps1 -TdHome D:/Anlogic/TD
+./build.ps1 -TdHome C:/APP2/ALTD
+python verification/generate_filter_fixtures.py
+./verification/run_sim.ps1
 python verification/check_project.py
 ```
 
-- TD 入口：`td_project/wb_ui_dsi.al`
-- 顶层：`user_source/hdl_source/design_top_wrapper.v`
-- UI 控制/绘制：`user_source/hdl_source/ui/`
-- 统一滤镜：`user_source/hdl_source/isp/image_filter_bank_96.v`
-- RGB 目标标注：`user_source/hdl_source/target/rgb_target_video.v`
-- 仿真入口：`verification/run_sim.ps1`
-- 构建证据：`build_evidence/integrated_*`
+TD 入口为 `td_project/wb_ui_dsi.al`，顶层为 `design_top_wrapper`。默认构建过程检查最终建立 / 保持时序及新产物时间，通过后才更新根目录的 `DSI_UNIFIED_*` 镜像。构建日志、仿真日志与交付 SHA-256 见 `build_evidence/integration_20261018/`、`INTEGRATION_MANIFEST.json`。
 
-当前环境完成了 TD 综合、布局布线、最终时序和 bitstream 生成；本机没有 Vivado，因此更新后的仿真回归未在本次合并中重跑。已有测试台已扩展到九页 UI 和六种滤镜，需在有 Vivado 的环境执行 `verification/run_sim.ps1`。
-
-## 下载文件辨别
-
-- `DSI_UNIFIED_SC500_7inch*.bit`：本次统一版，可用于当前验证。
-- `DSI_SHAPE_SC500_7inch*.bit`：Hproject 历史红色目标版，只作来源记录。
-- `lab_*` 和 `downloads/`：阶段工程/归档，不能代表当前 `project/` 源码。
+本次未连接实体开发板。`DSI_SHAPE_*` 和旧阶段日志属于历史来源，不代表本次统一版镜像。

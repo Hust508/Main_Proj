@@ -20,7 +20,8 @@ module red_shape_classify #(
   rd_data<=rows[rd_addr];
  end
  localparam IDLE=0,ST_REQ=1,ST_WAIT=2,ST_USE=3,ST_DONE=4,
-  POP=5,SEG_INIT=6,EDGE_REQ=7,EDGE_WAIT=8,EDGE_USE=9,EDGE_DONE=10;
+  POP=5,SEG_INIT=6,EDGE_REQ=7,EDGE_WAIT=8,EDGE_USE=9,EDGE_DONE=10,
+  ST_AREA=11,ST_EVAL=12,EDGE_CROSS=13;
  reg [3:0] state;
  assign O_busy=state!=IDLE;
  reg [10:0] left,right,top,bottom,scan_y,bw,bh,tolerance;
@@ -34,7 +35,11 @@ module red_shape_classify #(
  wire [10:0] row_l=rd_data[32:22],row_r=rd_data[21:11],row_reds=rd_data[10:0];
  wire [11:0] row_span={1'b0,row_r}-{1'b0,row_l}+12'd1;
  wire [10:0] dy=scan_y-top;
- wire [15:0] next_band_end=bh*({1'b0,band}+5'd1);
+ wire [4:0] band_count={1'b0,band}+5'd1;
+ wire [15:0] wide_bh={5'd0,bh};
+ wire [15:0] next_band_end=(band_count[0]?wide_bh:16'd0)+
+  (band_count[1]?(wide_bh<<1):16'd0)+(band_count[2]?(wide_bh<<2):16'd0)+
+  (band_count[3]?(wide_bh<<3):16'd0)+(band_count[4]?(wide_bh<<4):16'd0);
  wire [3:0] current_band=({dy,4'd0}>=next_band_end&&band<15)?band+1'b1:band;
  function [7:0] circle_width(input [3:0] n);
   begin case(n)
@@ -46,10 +51,10 @@ module red_shape_classify #(
  wire [19:0] expected_span=bw*circle_width(current_band);
  wire [19:0] actual_span={row_span,8'd0};
  wire [19:0] row_error=(actual_span>=expected_span)?actual_span-expected_span:expected_span-actual_span;
- wire [23:0] row_moment=({1'b0,row_l}+{1'b0,row_r})*row_span;
- wire [39:0] central_moment=({1'b0,left}+{1'b0,right})*spans;
+ // These products are used in disjoint FSM phases. One multiplier serves
+ // row moments, box area, central moment, width area, tolerance and crosses.
+ reg [39:0] central_moment,width_area;
  wire [39:0] center_error=(x_moment>=central_moment)?x_moment-central_moment:central_moment-x_moment;
- wire [39:0] width_area=bw*spans;
  wire solid=!missing&&reds*64'd100>=spans*64'd65;
  wire balanced=upper_area*64'd5>=lower_area*64'd3&&lower_area*64'd5>=upper_area*64'd3&&center_error*64'd5<=width_area;
  wire base_ok=solid&&balanced&&!clipped&&bw>=MIN_SHAPE_SIZE&&bh>=MIN_SHAPE_SIZE&&
@@ -67,11 +72,31 @@ module red_shape_classify #(
  wire [10:0] edge_x=side?row_r:row_l;
  wire signed [11:0] edge_dx=$signed({1'b0,edge_x})-$signed({1'b0,x0});
  wire signed [11:0] edge_dy=$signed({1'b0,scan_y})-$signed({1'b0,y0});
- wire signed [23:0] product_a=edge_dx*$signed({1'b0,seg_dy});
- wire signed [23:0] product_b=seg_dx*edge_dy;
+ reg signed [23:0] product_a;
+ reg [23:0] limit;
+ wire [11:0] abs_edge_dx=edge_dx[11]?-edge_dx:edge_dx;
+ wire [11:0] abs_seg_dx=seg_dx[11]?-seg_dx:seg_dx;
+ wire [11:0] abs_edge_dy=edge_dy[11]?-edge_dy:edge_dy;
+ reg [11:0] mul_a;reg [31:0] mul_b;
+ wire [43:0] mul_result=mul_a*mul_b;
+ wire [23:0] row_moment=mul_result[23:0];
+ wire signed [23:0] product_b=(seg_dx[11]^edge_dy[11])?-$signed(mul_result[23:0]):$signed(mul_result[23:0]);
+ always @(*)begin
+  mul_a={1'b0,row_l}+{1'b0,row_r};mul_b={20'd0,row_span};
+  if(I_start)begin
+   mul_a={1'b0,I_right}-{1'b0,I_left}+12'd1;
+   mul_b={20'd0,({1'b0,I_bottom}-{1'b0,I_top}+12'd1)};
+  end else case(state)
+   ST_DONE:begin mul_a={1'b0,left}+{1'b0,right};mul_b=spans;end
+   ST_AREA:begin mul_a={1'b0,bw};mul_b=spans;end
+   SEG_INIT:begin mul_a={1'b0,tolerance};mul_b={21'd0,(y1-y0)};end
+   EDGE_USE:begin mul_a=abs_edge_dx;mul_b={21'd0,seg_dy};end
+   EDGE_CROSS:begin mul_a=abs_seg_dx;mul_b={20'd0,abs_edge_dy};end
+   default:;
+  endcase
+ end
  wire signed [24:0] cross_value=$signed(product_a)-$signed(product_b);
  wire [23:0] deviation=cross_value[24]?-cross_value:cross_value;
- wire [23:0] limit=tolerance*seg_dy;
  wire wrong_turn=side?(cross_value< -$signed({1'b0,limit})):(cross_value>$signed({1'b0,limit}));
  wire [4:0] vertex_count={1'b0,left_pieces}+{1'b0,pieces}+caps;
  always @(posedge I_clk or negedge I_rst_n)
@@ -82,11 +107,12 @@ module red_shape_classify #(
   missing<=0;clipped<=0;concave<=0;round_ok<=0;band<=0;caps<=0;
   first_l<=0;first_r<=0;last_l<=0;last_r<=0;sp<=0;side<=0;pieces<=0;left_pieces<=0;
   y0<=0;y1<=0;x0<=0;x1<=0;split_y<=0;split_x<=0;seg_dy<=0;seg_dx<=0;max_error<=0;
+  central_moment<=0;width_area<=0;limit<=0;product_a<=0;
  end else if(I_start)begin
   O_shape<=0;O_ready<=!I_good;state<=I_good?ST_REQ:IDLE;
   left<=I_left;right<=I_right;top<=I_top;bottom<=I_bottom;scan_y<=I_top;
   bw<=I_right-I_left+1'b1;bh<=I_bottom-I_top+1'b1;
-  box_area<=({1'b0,I_right}-{1'b0,I_left}+12'd1)*({1'b0,I_bottom}-{1'b0,I_top}+12'd1);
+  box_area<=mul_result[21:0];
   tolerance<=((I_right-I_left+1)/EDGE_TOL_DIV<2)?11'd2:(I_right-I_left+1)/EDGE_TOL_DIV;
   clipped<=I_clipped;spans<=0;reds<=0;upper_area<=0;lower_area<=0;round_error<=0;x_moment<=0;
   missing<=0;concave<=0;round_ok<=0;band<=0;caps<=0;
@@ -112,7 +138,9 @@ module red_shape_classify #(
    band<=current_band;
    if(scan_y==bottom)state<=ST_DONE;else begin scan_y<=scan_y+1'b1;state<=ST_REQ;end
   end
-  ST_DONE:begin
+  ST_DONE:begin central_moment<=mul_result[39:0];state<=ST_AREA;end
+  ST_AREA:begin width_area<=mul_result[39:0];state<=ST_EVAL;end
+  ST_EVAL:begin
    round_ok<=circle_ok;
    if(!base_ok)begin state<=IDLE;O_ready<=1;end
    else begin
@@ -132,6 +160,7 @@ module red_shape_classify #(
    end
   end
   SEG_INIT:begin
+   limit<=mul_result[23:0];
    seg_dy<=y1-y0;seg_dx<=$signed({1'b0,x1})-$signed({1'b0,x0});
    max_error<=0;split_y<=y0;split_x<=x0;scan_y<=y0+1'b1;
    if(y1<=y0+1'b1)begin pieces<=pieces+1'b1;state<=POP;end else state<=EDGE_REQ;
@@ -139,6 +168,10 @@ module red_shape_classify #(
   EDGE_REQ:begin rd_addr<=scan_y;state<=EDGE_WAIT;end
   EDGE_WAIT:state<=EDGE_USE;
   EDGE_USE:begin
+   product_a<=edge_dx[11]?-$signed(mul_result[23:0]):$signed(mul_result[23:0]);
+   state<=EDGE_CROSS;
+  end
+  EDGE_CROSS:begin
    if(wrong_turn)concave<=1;
    if(deviation>max_error)begin max_error<=deviation;split_y<=scan_y;split_x<=edge_x;end
    if(scan_y>=y1-1'b1)state<=EDGE_DONE;else begin scan_y<=scan_y+1'b1;state<=EDGE_REQ;end

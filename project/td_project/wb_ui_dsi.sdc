@@ -32,3 +32,13 @@ set_false_path -from [get_clocks {pll_clk_24m}] -to [get_clocks {sys_clk_25m}]
 
 # Held telemetry mailbox; same request/ACK discipline as UI config.
 set_false_path -through [get_nets {u_wb_telemetry/payload[0] u_wb_telemetry/payload[1] u_wb_telemetry/payload[2] u_wb_telemetry/payload[3] u_wb_telemetry/payload[4] u_wb_telemetry/payload[5] u_wb_telemetry/payload[6] u_wb_telemetry/payload[7] u_wb_telemetry/payload[8] u_wb_telemetry/payload[9] u_wb_telemetry/payload[10] u_wb_telemetry/payload[11] u_wb_telemetry/payload[12] u_wb_telemetry/payload[13] u_wb_telemetry/payload[14] u_wb_telemetry/payload[15] u_wb_telemetry/payload[16] u_wb_telemetry/payload[17] u_wb_telemetry/payload[18] u_wb_telemetry/payload[19] u_wb_telemetry/payload[20] u_wb_telemetry/payload[21] u_wb_telemetry/payload[22] u_wb_telemetry/payload[23] u_wb_telemetry/payload[24] u_wb_telemetry/payload[25] u_wb_telemetry/payload[26] u_wb_telemetry/payload[27] u_wb_telemetry/payload[28] u_wb_telemetry/payload[29] u_wb_telemetry/payload[30] u_wb_telemetry/payload[31] u_wb_telemetry/payload[32] u_wb_telemetry/payload[33] u_wb_telemetry/payload[34] u_wb_telemetry/payload[35] u_wb_telemetry/payload[36]}]
+
+# BEGIN PROCESS_DDR_GRAY_CDC
+# Frame-store FIFO: 24MHz processing <-> DDR user clock. Source Gray to
+# FIRST synchronizer stage is CDC. Bound every bit to the faster 7.5ns period;
+# remove only phase-dependent HOLD. Second-stage paths stay normally timed.
+# Match the original HDL register buses as in the supplied vendor FIFO SDC.
+set_max_delay -from [get_regs {u_video_in/fifo/rg[*]}] -to [get_regs {u_video_in/fifo/rg1[*]}] -datapath_only 7.500
+set_false_path -hold -from [get_regs {u_video_in/fifo/rg[*]}] -to [get_regs {u_video_in/fifo/rg1[*]}]
+set_max_delay -from [get_regs {u_video_in/fifo/wg[*]}] -to [get_regs {u_video_in/fifo/wg1[*]}] -datapath_only 7.500
+set_false_path -hold -from [get_regs {u_video_in/fifo/wg[*]}] -to [get_regs {u_video_in/fifo/wg1[*]}]

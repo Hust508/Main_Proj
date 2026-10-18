@@ -24,4 +24,6 @@ project/td_project/*_Runs/*/*.rpt
 project/td_project/*_Runs/*/*.log
 project/td_project/*_Runs/*/*.logw
 project/td_project/*_Runs/*/build_console.txt
+project/td_project/*_Runs/*/*_console.txt
+project/td_project/*_Runs/*/*_runtime.sdc
 project/td_project/*_Runs/*/*_clock_utilization.txt

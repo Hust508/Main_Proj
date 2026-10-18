@@ -55,8 +55,13 @@ module ui_control_tb;
   tap(680,460);expect_page(7);tap(900,140);if(image_mode!=1)$fatal(1,"Gray filter");
   tap(680,220);if(image_mode!=2)$fatal(1,"Cartoon filter");tap(900,220);if(image_mode!=3)$fatal(1,"Negative filter");
   tap(680,300);if(image_mode!=4)$fatal(1,"Pixel filter");tap(900,300);if(image_mode!=5)$fatal(1,"Edge filter");
+  tap(680,380);if(image_mode!=6)$fatal(1,"Retro filter");
+  tap(900,380);if(image_mode!=7)$fatal(1,"Enhancement filter");
+  tap(792,380);if(image_mode!=7)$fatal(1,"Column gap must not select a filter");
+  tap(900,416);if(image_mode!=7)$fatal(1,"Exclusive bottom boundary");
   tap(620,50);expect_page(1);tap(900,460);expect_page(8);tap(700,140);if(!tag)$fatal(1,"Tag toggle");
   tap(700,220);if(!detect)$fatal(1,"Tracking toggle");
+  tap(620,50);tap(680,460);if(image_mode!=7)$fatal(1,"Filter memory lost after navigation");
   $display("PASS UI long press, WB pages, filter library, feature toggles, shared gain, repeat/clamps and fault cancellation");$finish;
  end
  initial begin #1000000;$fatal(1,"UI watchdog");end
@@ -180,5 +185,5 @@ module overlay_tb;
   end
   $display("PASS nine Chinese UI pages, exact overlay control latency, frame-latched configuration and exported RTL screenshots");$finish;
  end
- initial begin #50000000;$fatal(1,"Overlay watchdog");end
+ initial begin #70000000;$fatal(1,"Overlay watchdog");end
 endmodule

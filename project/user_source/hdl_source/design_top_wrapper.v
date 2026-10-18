@@ -762,7 +762,9 @@ assign S_raw_tuser  = S_axis_tuser;
 
 
 //ISP算法顶层模块
+wire S_filter_cdc_overflow;
 isp_top u_isp_top (
+.I_process_clk(S_24m_clk),.O_cdc_overflow(S_filter_cdc_overflow),
 .I_wb_config(S_wb_camera),.I_image_mode(S_image_mode_camera),
 .O_wb_telemetry(S_wb_telemetry),.I_previous_bad(S_previous_bad), .O_frame_mode(S_isp_frame_mode),
 .axi4s_video_aclk(S_csi_rx_clk),
@@ -787,16 +789,19 @@ isp_top u_isp_top (
       .I_line_end(S_csi_line_end),
       .I_lane_error(|S_lane_error),.O_previous_bad(S_previous_bad),
       .O_frame_toggle(S_camera_frame_toggle),.O_bad_frames(S_capture_bad_count));
+    (* async_reg="true" *) reg [1:0] S_process_bad;
+    always @(posedge S_24m_clk or negedge S_rst_n)
+      if(!S_rst_n)S_process_bad<=0;else S_process_bad<={S_process_bad[0],S_previous_bad};
     video_in u_video_in(
         .I_rst_n              (  S_rst_n             ),
 
-        .I_camera_clk         ( S_csi_rx_clk          ),
+        .I_camera_clk         ( S_24m_clk             ),
         .I_camera_frame_start ( S_ISP_O_tuser  ),
         .I_camera_valid       ( S_ISP_O_tvalid ),
         .I_camera_data        ( S_ISP_O_tdata  ),
         .I_camera_mode        ( S_isp_frame_mode ),
         .O_slot_modes         ( S_slot_modes ),
-        .I_mipi_rx_error      ( S_previous_bad ),
+        .I_mipi_rx_error      ( S_process_bad[1]|S_filter_cdc_overflow ),
 
         .I_ddr_clk            ( S_ddr_clk             ),
 		.I_display_pause      ( 1'b0                  ),
@@ -971,7 +976,7 @@ isp_top u_isp_top (
     wire [23:0] S_target_data;
     rgb_target_video u_rgb_target_video (
         .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),
-        .I_enable(S_ui_display[27]),.I_page(S_ui_display[25:22]),
+        .I_enable(S_ui_frame_active[27]),.I_page(S_ui_frame_active[25:22]),
         .I_vsync(S_base_vsync),.I_hsync(S_base_hsync),.I_de(S_base_de),.I_data(S_base_data),
         .O_vsync(S_target_vsync),.O_hsync(S_target_hsync),.O_de(S_target_de),.O_data(S_target_data));
 
@@ -982,17 +987,25 @@ isp_top u_isp_top (
     reg S_base_vs_d;
     reg [38:0] S_ui_frame;
     wire [38:0] S_ui_frame_active=(S_base_vsync&&!S_base_vs_d)?S_ui_display:S_ui_frame;
-    reg [38:0] S_ui_display_d1,S_ui_display_d2,S_ui_display_d3;
+    reg [38:0] S_ui_display_d1,S_ui_display_d2,S_ui_display_d3,S_ui_display_d4,S_ui_display_d5;
     always @(posedge S_dsi_tx_clk or negedge S_dsi_ready_n)
-    if(!S_dsi_ready_n)begin S_base_vs_d<=0;S_ui_frame<=UI_CONFIG_RESET;S_ui_display_d1<=UI_CONFIG_RESET;S_ui_display_d2<=UI_CONFIG_RESET;S_ui_display_d3<=UI_CONFIG_RESET;end
+    if(!S_dsi_ready_n)begin S_base_vs_d<=0;S_ui_frame<=UI_CONFIG_RESET;S_ui_display_d1<=UI_CONFIG_RESET;S_ui_display_d2<=UI_CONFIG_RESET;S_ui_display_d3<=UI_CONFIG_RESET;S_ui_display_d4<=UI_CONFIG_RESET;S_ui_display_d5<=UI_CONFIG_RESET;end
     else begin
         S_base_vs_d<=S_base_vsync;
         if(S_base_vsync&&!S_base_vs_d)S_ui_frame<=S_ui_display;
-        S_ui_display_d1<=S_ui_frame_active;S_ui_display_d2<=S_ui_display_d1;S_ui_display_d3<=S_ui_display_d2;
+        S_ui_display_d1<=S_ui_frame_active;S_ui_display_d2<=S_ui_display_d1;S_ui_display_d3<=S_ui_display_d2;S_ui_display_d4<=S_ui_display_d3;S_ui_display_d5<=S_ui_display_d4;
     end
+    wire S_ui_vsync,S_ui_hsync,S_ui_de;wire [23:0] S_ui_data;
     wb_ui_overlay u_wb_ui_overlay (
         .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),.I_config(S_ui_display_d3),.I_telemetry(S_wb_telemetry_display),
         .I_vsync(S_target_vsync),.I_hsync(S_target_hsync),.I_de(S_target_de),.I_data(S_target_data),
+        .O_vsync(S_ui_vsync),.O_hsync(S_ui_hsync),.O_de(S_ui_de),.O_data(S_ui_data));
+    // Exact touch123 watermark assets/coordinates/colors. Keep UI controls
+    // unobstructed on settings pages; counter continues while hidden.
+    dsi_osd_overlay u_original_osd(
+        .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),
+        .I_enable(S_ui_display_d5[26]&&(S_ui_display_d5[25:22]==0)),
+        .I_vsync(S_ui_vsync),.I_hsync(S_ui_hsync),.I_de(S_ui_de),.I_data(S_ui_data),
         .O_vsync(S_mixer_vsync),.O_hsync(S_mixer_hsync),.O_de(S_mixer_de),.O_data(S_mixer_data));
 
     rgb_24b_to_32b #(

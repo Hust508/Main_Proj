@@ -1,4 +1,4 @@
-param([string]$TdHome = 'C:\APP2\ALTD')
+﻿param([string]$TdHome = 'C:\APP2\ALTD')
 
 $ErrorActionPreference = 'Stop'
 
@@ -24,7 +24,7 @@ foreach ($taskRun in @('syn_1', 'phy_1')) {
 
     if ($taskRun -eq 'phy_1') {
 
-        $taskExtra = "set_param bitgen compress on`nbitgen -bit ${taskProjectName}.bit"
+        $taskExtra = "source ../../../tools/finalize_timing.tcl`nset_param bitgen compress off`nbitgen -bit ${taskProjectName}.bit`nset_param bitgen compress on`nbitgen -bit ${taskProjectName}.bit"
 
     }
 

@@ -143,6 +143,9 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
         end else if(I_y>=272&&I_y<336)begin
          if(I_x>=584&&I_x<784)O_image_mode<=4;
          else if(I_x>=800&&I_x<1000)O_image_mode<=5;
+        end else if(I_y>=352&&I_y<416)begin
+         if(I_x>=584&&I_x<784)O_image_mode<=6;
+         else if(I_x>=800&&I_x<1000)O_image_mode<=7;
         end
        end
        8:begin

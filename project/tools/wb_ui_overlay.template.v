@@ -65,10 +65,10 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
   background=I_data;foreground=24'hf3f6fa;text_on=0;text_id=0;origin_x=0;origin_y=0;
   if(page==0)begin
    if(y<64||y>=548)background={2'b0,I_data[23:18],2'b0,I_data[15:10],2'b0,I_data[7:2]};
-   label(mode==0?1:mode==1?2:3,16,20,8);
-   if(mode!=0)label(28,240,20,6);
-   label(image_mode==0?55:image_mode==1?56:image_mode==2?57:image_mode==3?58:image_mode==4?59:60,400,20,4);
-   if(tag_enable)label(63,600,20,11);
+   label(mode==0?1:mode==1?2:3,176,20,8);
+   if(mode!=0)label(28,400,20,6);
+   label(image_mode==0?55:image_mode==1?56:image_mode==2?57:image_mode==3?58:image_mode==4?59:image_mode==5?60:image_mode==6?63:38,600,20,4);
+
    label(29,864,20,5);
    label(4,16,562,8);
    if(!online)label(26,736,562,5);
@@ -96,7 +96,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      label(telemetry[36]?41:42,600,332,5);
      if(in_rect(x,y,600,400,1000,472))background=detect_enable?24'h087f83:24'h26394d;
      label(35,620,424,4);label(detect_enable?36:37,916,424,2);
-     label(38,600,504,5);
+
     end
     3:begin
      if(in_rect(x,y,584,112,1000,176))background=(mode==1&&preset==0)?24'h087f83:24'h26394d;
@@ -160,13 +160,16 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      label(55,648,132,2);label(56,864,132,2);
      label(57,648,212,2);label(58,864,212,2);
      label(59,636,292,3);label(60,864,292,2);
+     if(in_rect(x,y,584,352,784,416))background=(image_mode==6)?24'h087f83:24'h26394d;
+     if(in_rect(x,y,800,352,1000,416))background=(image_mode==7)?24'h087f83:24'h26394d;
+     label(63,648,372,2);label(38,852,372,4);
     end
     8:begin
      if(in_rect(x,y,584,112,1000,176))background=tag_enable?24'h087f83:24'h26394d;
      if(in_rect(x,y,584,192,1000,256))background=detect_enable?24'h087f83:24'h26394d;
      label(61,620,132,6);label(tag_enable?36:37,916,132,2);
      label(62,620,212,4);label(detect_enable?36:37,916,212,2);
-     label(38,600,292,5);
+
     end
    endcase
   end

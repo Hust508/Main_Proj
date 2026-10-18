@@ -1,39 +1,50 @@
-# 统一 UI、滤镜与 RGB 目标工程构建报告
+# 八滤镜与原版 OSD 统一工程构建报告
 
-日期：2026-10-18（Asia/Shanghai）。目标器件：PH1P35MDG324，Speed 3。工具：Anlogic TD 6.2.1。
+日期：2026-10-18（Asia/Shanghai）。主工程 `project/`，目标 PH1P35MDG324，Speed -3。TD 6.2.168116；仿真 Vivado XSIM 2025.1。整合来源、算法变化及模块复用见 [详细说明](../docs/INTEGRATION_20261018.md)。
 
-## 验证结论
+## 实际执行结果
 
-TD 完成综合、布局、布线、建立/保持时序分析以及普通和压缩 bitstream 生成。约束、摄像头采集尺寸、DDR 帧缓存和 1024×600 DSI 输出链路保持原工程设置。
+**30 项 RTL 仿真全部通过**；TD 综合、布局、布线、最终建立 / 保持分析以及普通 / 压缩 bitstream 生成通过。标准全流程后对最终布局应用新增 FIFO 的有界 CDC 约束，再次执行最终时序分析、必要的物理优化并生成镜像；相关复核日志和脚本一并交付。下列数值来自本次最终报告，不沿用历史包的结论。
 
-| 指标 | 结果 |
+| 时序指标 | ns |
 |---|---:|
-| SWNS / STNS | `+0.013 ns` / `0 ns` |
-| HWNS / HTNS | `+0.021 ns` / `0 ns` |
-| LUT6 | 14,792 / 21,216（69.72%） |
-| Slice | 15,476 / 21,216（72.94%） |
-| 寄存器 | 10,345 / 42,432（24.38%） |
-| ERAM20K | 35 / 108（32.41%） |
-| DSP | 40 / 40（100%） |
+| SWNS / STNS | +0.026 / 0.000 |
+| HWNS / HTNS | +0.020 / 0.000 |
 
-DSP 已无剩余，后续算法不能默认增加乘法器；应继续采用移位加法、时分复用或先释放现有 DSP。当前实现已通过最终时序。
+STA 覆盖率：97.59%。引脚与原 SDC 字节前缀保持不变，追加帧存储 FIFO 第一级 Gray 同步器的 7.5 ns 最大数据路径和仅保持检查例外；没有放宽时钟周期或屏蔽同步后的数据路径。详见整合说明第 5 节。最终结论包括这些数据路径上限，仍只覆盖已有约束检查的路径。
 
-## 产物
+| 资源 | 使用 / 总量 |
+|---|---:|
+| LUT6 | 19452 / 21216（91.69%） |
+| Slice | 20228 / 21216（95.34%） |
+| 寄存器 | 15905 / 42432（37.48%） |
+| ERAM20K | 86 / 108（79.63%） |
+| DSP | 40 / 40（100.00%） |
 
-| 文件 | 用途 |
-|---|---|
-| `DSI_UNIFIED_SC500_7inch.bit` | 普通 bitstream |
-| `DSI_UNIFIED_SC500_7inch_compress.bit` | 推荐压缩 bitstream |
-| `build_evidence/integrated_synthesis_console.txt` | 本次综合日志 |
-| `build_evidence/integrated_physical_console.txt` | 本次布局布线/bitgen 日志 |
-| `build_evidence/integrated_final_timing.rpt` | 最终时序报告 |
-| `build_evidence/integrated_final_area.rpt` | 最终资源报告 |
+资源已接近器件上限，DSP 全部使用；后续扩展需要继续复用或削减现有运算。形状分类的变量乘积已共享，释放的 DSP 用于新增滤镜。
 
-## 覆盖范围
+## 仿真覆盖
 
-- `verification/check_project.py` 的工程依赖、相对路径、模块登记和编译序号检查通过。
-- TD 全流程编译通过，说明顶层、UI、滤镜、RGB 目标、DDR 和显示链路可以共同综合实现。
-- 当前机器未安装 Vivado，合并后的 RTL 仿真回归没有重跑；`filter_bank_tb` 和九页 UI 回归已写入测试集合。
-- 没有连接实体开发板，因此摄像头画质、触摸坐标方向、颜色阈值和形状准确率仍需实测。
+- 八滤镜 16 帧、24,576 像素独立参考；SOF 与首像素同拍 / 在消隐、随机空拍、EOL、帧中模式请求。
+- 复古和视觉增强两帧 1280×720，共 1,843,200 像素逐项匹配参考模型。
+- 原版 OSD：2,546,688 个有效像素、原 Logo / 透明区 / 字模、三个参数配置、全部十进制进位和回卷、复位恢复。
+- 停钟 CSI → RGB FIFO → 滤镜 → 打包 → DDR：四帧、6,144 像素、1,152 字，含 DDR 暂停和随帧传递的模式号，无丢帧 / 溢出。
+- 两种增益乘法各 262,144 组穷举，含最高增益位与定点位宽。
+- 九页 UI、八滤镜热区 / 记忆、WB 76 档 K 值、361 组色偏、感光度与 GT911 / I²C 故障。
+- 23 组形状样例，最大分类耗时 5,541 显示时钟；完整目标 / UI 视频输出、短消隐中止保护。
+- 原两路 CSI 解码、去马赛克、WB、FIFO、MC 队列、DDR 模型到裁剪显示链路，含四个完整原生帧和 B5 / G6 像素参考。
 
-历史 `build_evidence/*_tb_run.log` 来自 Hproject 阶段版本，只能作为继承模块的历史证据，不计入本次统一版的已执行测试。
+测试完整名单、各项 PASS 说明、原始日志 SHA-256 见 [validation_results.json](build_evidence/integration_20261018/validation_results.json)。FIFO / DDR 行为模型不能替代硬核 PHY 和物理 MIPI 验证。
+
+## 日志与产物
+
+证据目录为 `build_evidence/integration_20261018/`，包含本次综合 / 物理日志、最终时序、资源、时序例外、30 项仿真及编译日志。根级旧 `build_evidence/integrated_*` 与早期日志仅保留为历史来源。
+
+- `DSI_UNIFIED_SC500_7inch_compress.bit`：本次推荐压缩镜像。
+- `DSI_UNIFIED_SC500_7inch.bit`：同次普通镜像。
+- `INTEGRATION_MANIFEST.json`：本次交付文件 SHA-256。
+- `INTEGRATION_PROVENANCE.json`：main / Lproject 固定提交、原 OSD ZIP 和四个原版文件校验、原 SDC 前缀 / 最终 SDC / 未变 ADC 校验。
+
+物理日志保留 5 条时钟类 CRITICAL-WARNING，涉及既有相机输出时钟兼作数据端口、相机 I²C 内部分频时钟、DSI 参考时钟路由等；完整原文列于 validation_results。综合 / 物理日志无 ERROR。最终建立 / 保持时序均通过，不能据此宣称所有未约束外部时序已经验证。
+
+本次没有连接实体开发板，摄像头画质、触摸方向、滤镜观感及目标识别率需按整合说明的上板清单确认。

@@ -1,33 +1,30 @@
 # Hust508 FPGA 摄像头统一工程
 
-当前版本把 `Hproject` 的长按式白平衡 UI、RGB 形状目标功能与 `Yproject` 的图像风格化方向合并到同一个可构建工程。摄像头视频保持原有 1280×720 采集、1024×600 全屏输出和中心裁剪比例；UI 仅覆盖显示像素，不改变视频缩放或画面尺寸。
+最新工程位于 **[project/](project/)**。本版在统一 UI、白平衡和 RGB 主目标功能的基础上，合入 Lproject 的复古 / 视觉增强滤镜，并恢复原触屏例程的安路 Logo、文字及显示帧计数水印。
 
-## 当前入口
-
-| 内容 | 路径 |
+| 入口 | 文件 |
 |---|---|
-| 最新功能、舍弃项、操作与架构 | [统一版设计/开发文档](docs/latest/README.md) |
-| 可构建主工程 | [project](project) |
-| TD 工程入口 | [wb_ui_dsi.al](project/td_project/wb_ui_dsi.al) |
-| 推荐上板镜像 | [DSI_UNIFIED_SC500_7inch_compress.bit](project/DSI_UNIFIED_SC500_7inch_compress.bit) |
+| 详细整合说明、来源、复用和兼容变化 | [INTEGRATION_20261018.md](docs/INTEGRATION_20261018.md) |
+| 当前 UI / 操作与接口 | [统一版说明](docs/latest/README.md) |
+| TD 工程 | [wb_ui_dsi.al](project/td_project/wb_ui_dsi.al) |
+| 推荐下载镜像 | [DSI_UNIFIED_SC500_7inch_compress.bit](project/DSI_UNIFIED_SC500_7inch_compress.bit) |
 | 普通镜像 | [DSI_UNIFIED_SC500_7inch.bit](project/DSI_UNIFIED_SC500_7inch.bit) |
-| 本次构建报告 | [BUILD_REPORT.md](project/BUILD_REPORT.md) |
+| 本次验证和最终时序 | [BUILD_REPORT.md](project/BUILD_REPORT.md) |
 
-## 功能概览
-
-- 预览页长按约 800 ms 打开设置；顶部、底部为半透明黑色状态栏。
+- 单指长按预览约 800 ms，打开右侧设置面板；逐级回退返回。
 - 白平衡：自动、环境预设、手动色温、B/A 与 G/M 色偏、感光度。
-- 滤镜库：原图、黑白、动漫、负片、像素画、边缘。
-- 功能库：`FPGA VISION` 水印标签；红、绿、蓝单一主目标的 BALL/CUBE/UNKNOWN 标注。
-- 全部滤镜共用 `image_filter_bank_96` 接口、帧同步模式锁存和并行数据路径。
+- 滤镜库：原图、黑白、动漫、负片、像素画、边缘、复古、视觉增强。
+- 功能库：原版 OSD 水印、RGB 单一主目标的 BALL/CUBE/UNKNOWN 标注，分别开关。
+- 动漫、边缘和视觉增强共用空间窗口与 Sobel；形状分类器按阶段复用乘法器。
 
-## 重建
+摄像头仍采集 1280×720，显示中心裁剪的 1024×600；引脚和原时钟定义保持不变，新增处理域的 FIFO 另有明确的数据路径上限。平台为 MLKPAI-F02 / FC02、PH1P35MDG324 Speed 3、SC500CS、DSI / GT911 屏。实体相机画质和触屏仍需上板验收。
 
 ```powershell
-cd D:/FPGA/Main_Proj/project
-./build.ps1 -TdHome D:/Anlogic/TD
+cd Main_Proj/project
+./build.ps1 -TdHome C:/APP2/ALTD
+python verification/generate_filter_fixtures.py
+./verification/run_sim.ps1 -VivadoBin C:/APP2/VIVADO/2025.1/Vivado/bin
+python verification/check_project.py
 ```
 
-本次 TD 6.2.1 全流程通过：SWNS `+0.013 ns`、HWNS `+0.021 ns`。硬件平台为 MLKPAI-F02 / FC02、PH1P35MDG324 Speed 3、SC500CS、1024×600 DSI/GT911 屏。实物摄像头和触屏仍需上板验收。
-
-`lab_*` 目录和 `downloads/` 是分支合并带入的阶段工程及历史交付包；最新开发与下载均以 `project/` 和 `DSI_UNIFIED_*` 为准。
+滤镜参考生成需要 Python 3.9+ / NumPy；UI 字模已交付，通常构建不需重新生成。`lab_*`、`downloads/` 是历史阶段工程和归档，最新工程和镜像以 `project/` 为准。更多来源及限制见整合说明。
