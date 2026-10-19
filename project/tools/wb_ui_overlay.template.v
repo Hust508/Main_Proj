@@ -3,6 +3,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  input wire I_clk,I_rst_n,input wire [38:0] I_config,
  input wire [36:0] I_telemetry,
  input wire [8:0] I_latency,
+ input wire [23:0] I_diagnostics,input wire [7:0] I_underflow,
  input wire I_vsync,I_hsync,I_de,input wire [23:0] I_data,
  output reg O_vsync,O_hsync,O_de,output reg [23:0] O_data
 );
@@ -19,8 +20,30 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [36:0] telemetry=(pending||frame_start)?I_telemetry:telemetry_cfg;
  reg [8:0] latency_cfg;
  wire [8:0] latency=(pending||frame_start)?I_latency:latency_cfg;
+ reg [23:0] diagnostics_cfg;reg [7:0] underflow_cfg;
+ wire [23:0] diagnostics=(pending||frame_start)?I_diagnostics:diagnostics_cfg;
+ wire [7:0] underflow=(pending||frame_start)?I_underflow:underflow_cfg;
  wire latency_valid=latency[8];
  wire [7:0] latency_frames=latency[7:0];
+ // Eight shift/add-3 steps turn an 8-bit counter into three BCD digits.
+ function [11:0] bcd8(input [7:0] value);
+  integer bit_index;reg [11:0] digits;
+  begin
+   digits=0;
+   for(bit_index=7;bit_index>=0;bit_index=bit_index-1)begin
+    if(digits[3:0]>4)digits[3:0]=digits[3:0]+4'd3;
+    if(digits[7:4]>4)digits[7:4]=digits[7:4]+4'd3;
+    if(digits[11:8]>4)digits[11:8]=digits[11:8]+4'd3;
+    digits={digits[10:0],value[bit_index]};
+   end
+   bcd8=digits;
+  end
+ endfunction
+ wire [11:0] latency_bcd=bcd8(latency_frames);
+ wire [11:0] peak_bcd=bcd8(diagnostics[23:16]);
+ wire [11:0] drop_bcd=bcd8(diagnostics[15:8]);
+ wire [11:0] overflow_bcd=bcd8(diagnostics[7:0]);
+ wire [11:0] underflow_bcd=bcd8(underflow);
  wire signed [4:0] ab=active[37:33],gm=active[32:28];
  wire signed [10:0] point_x=11'sd800+$signed(ab)*11'sd14;
  wire signed [10:0] point_y=11'sd300-$signed(gm)*11'sd14;
@@ -40,7 +63,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [10:0] thumb_x=11'd600+index*11'd5;
  wire [10:0] gain_x=11'd600+gain_level*11'd5;
  always @(posedge I_clk or negedge I_rst_n)
- if(!I_rst_n)begin latency_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
+ if(!I_rst_n)begin latency_cfg<=0;diagnostics_cfg<=0;underflow_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
  else begin
   vs_d<=I_vsync;de_d<=I_de;
   if(frame_start)begin x_count<=I_de?11'd1:11'd0;y_count<=0;pending<=1;end
@@ -48,7 +71,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
    if(I_de)x_count<=x_count+1'b1;else x_count<=0;
    if(de_d&&!I_de)y_count<=y_count+1'b1;
   end
-  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;pending<=0;end
+  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;diagnostics_cfg<=I_diagnostics;underflow_cfg<=I_underflow;pending<=0;end
  end
  // GENERATED_GLYPHS
  function automatic in_rect(input [10:0] px,py,input integer left,top,right,bottom);
@@ -84,7 +107,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
    if(x>=560)background=24'h111e2c;
    if(in_rect(x,y,584,24,688,80))background=24'h34495e;
    label(5,612,44,2);
-   label(page==1?6:page==2?7:page==3?8:page==4?9:page==6?39:page==7?53:page==8?54:10,720,44,6);
+   label(page==1?6:page==2?7:page==3?8:page==4?9:page==6?39:page==7?53:page==8?54:page==9?65:10,720,44,6);
    label(27,16,562,4);
    case(page)
     1:begin
@@ -95,6 +118,8 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      if(in_rect(x,y,584,432,784,496)||in_rect(x,y,800,432,1000,496))background=24'h26394d;
      label(7,620,132,5);label(8,620,212,4);label(9,620,292,5);label(10,620,372,3);
      label(53,648,452,3);label(54,864,452,3);
+     if(in_rect(x,y,584,504,1000,556))background=24'h26394d;
+     label(65,732,518,4);
     end
     2:begin
      label(47,600,120,7);label(48,600,190,7);label(49,600,260,7);
@@ -178,6 +203,16 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      label(61,620,132,6);label(tag_enable?36:37,916,132,2);
      label(62,620,212,4);label(detect_enable?36:37,916,212,2);
 
+    end
+    9:begin
+     if(in_rect(x,y,584,112,1000,496))background=24'h1b2b3b;
+     label(66,600,132,4);label(72,880,132,3);
+     label(67,600,212,4);label(73,880,212,3);
+     label(68,600,292,4);label(74,880,292,3);
+     label(69,600,372,4);label(75,880,372,3);
+     label(70,600,452,4);label(76,880,452,3);
+     if(in_rect(x,y,880,132,952,156))foreground=!latency_valid?24'h8a96a5:(latency_frames<=2)?24'h16b8ad:(latency_frames<=4)?24'hffaa55:24'hdd6464;
+     label(71,600,520,8);
     end
    endcase
   end

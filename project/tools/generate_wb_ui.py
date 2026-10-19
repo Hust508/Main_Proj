@@ -2,6 +2,7 @@ from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 w=Path(__file__).resolve().parent.parent;r=w/'user_source/hdl_source'
 labels=['白平衡演示','模式：自动','模式：环境预设','模式：自定义','长按画面进入设置','回退','白平衡设置','自动白平衡','环境预设','手动白平衡','感光度','自动模式已启用','自动适应环境光','切换光源后稍候','选择光照环境','暖色灯光 3000K','日光 5500K','阴天 6500K','阴影 7500K','拖动滑条调节色温','2500K','10000K','感光度','减少','增加','恢复默认','触屏未连接','实时预览','','','每格 100K','实体按键同步可用','1倍','2倍','4倍','目标识别','开启','关闭','视觉增强','色彩偏移','归零','统计有效','等待稳定帧','B','A','G','M','','','','','','按键','滤镜库','功能库','原图','黑白','动漫','负片','像素画','边缘','OSD 水印','目标跟踪','复古','延迟帧']
+labels += ['诊断信息','当前帧龄','峰值帧龄','丢弃帧数','读取溢出','显示欠读','计数上限255','','','','','']
 chars=sorted(set(''.join(labels)+'0123456789K增益 /.-倍RBAGM'))
 assert len(chars)<=256
 ids={c:i for i,c in enumerate(chars)}
@@ -23,7 +24,7 @@ for c in chars:
  always @(posedge I_clk)O_bits<=font[I_addr];
 endmodule
 '''.encode('utf-8'))
-f='    function [7:0] glyph(input [6:0] text_id,input [5:0] pos);\n        begin\n            glyph=8\'d'+str(ids[' '])+';\n            case(text_id)\n'
+f='    function [7:0] glyph(input [6:0] text_id,input [5:0] pos);\n        reg [11:0] diagnostic_digits;\n        begin\n            diagnostic_digits=(text_id==72)?latency_bcd:(text_id==73)?peak_bcd:(text_id==74)?drop_bcd:(text_id==75)?overflow_bcd:underflow_bcd;\n            glyph=8\'d'+str(ids[' '])+';\n            case(text_id)\n'
 for idx,label in enumerate(labels):
     if not label or idx in (52,64):continue
     f+=f'            7\'d{idx}:case(pos)\n'
@@ -66,10 +67,15 @@ f+='''            7'd28:case(pos)
                 default:;endcase
             7'd64:case(pos)
                 0:glyph=CHAR_YAN;1:glyph=CHAR_CHI;
-                3:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=100)?digit_glyph(latency_frames/100):8'd'''+str(ids[' '])+''';
-                4:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=10)?digit_glyph((latency_frames/10)%10):8'd'''+str(ids[' '])+''';
-                5:glyph=!latency_valid?CHAR_MINUS:digit_glyph(latency_frames%10);
+                3:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=100)?digit_glyph(latency_bcd[11:8]):8'd'''+str(ids[' '])+''';
+                4:glyph=!latency_valid?CHAR_MINUS:(latency_frames>=10)?digit_glyph(latency_bcd[7:4]):8'd'''+str(ids[' '])+''';
+                5:glyph=!latency_valid?CHAR_MINUS:digit_glyph(latency_bcd[3:0]);
                 7:glyph=CHAR_ZHEN;
+                default:;endcase
+            7'd72,7'd73,7'd74,7'd75,7'd76:case(pos)
+                0:glyph=(text_id==72&&!latency_valid)?CHAR_MINUS:digit_glyph(diagnostic_digits[11:8]);
+                1:glyph=(text_id==72&&!latency_valid)?CHAR_MINUS:digit_glyph(diagnostic_digits[7:4]);
+                2:glyph=(text_id==72&&!latency_valid)?CHAR_MINUS:digit_glyph(diagnostic_digits[3:0]);
                 default:;endcase
             default:;
             endcase

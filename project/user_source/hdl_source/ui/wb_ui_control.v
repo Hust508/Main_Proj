@@ -8,7 +8,7 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
  output reg signed [4:0] O_ab,O_gm,output reg O_key_axis
 );
  // Pages 0..6 keep the Hproject UI. Page 7 selects filters; page 8
- // contains independent display features (watermark tag and tracking).
+ // contains display features; page 9 shows live diagnostics.
  reg [31:0] tick;wire ms=tick==CLK_HZ/1000-1;
  reg held,blocked,consumed,drag,axis_drag;reg [2:0] axis_direction;
  reg [9:0] start_x,start_y;
@@ -99,6 +99,7 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
         else if(I_y>=272&&I_y<336)begin O_page<=4;O_mode<=2;O_index<=custom_index;end
         else if(I_y>=352&&I_y<416)O_page<=5;
         else if(I_y>=432&&I_y<496)O_page<=(I_x<792)?7:8;
+        else if(I_y>=504&&I_y<556)O_page<=9;
        end
        2:if(I_x>=600&&I_x<1000&&I_y>=400&&I_y<472)O_detect_enable<=!O_detect_enable;
        3:if(I_x>=584&&I_x<1000)begin

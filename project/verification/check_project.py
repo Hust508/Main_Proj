@@ -37,7 +37,8 @@ def main():
    for rel,h in provenance['osd_unchanged_sha256'].items():
     assert sha(z.read('lab_touch123_DSI_SC500_7inch/user_source/hdl_source/'+rel))==h,rel
   print('PASS supplied OSD archive and all four original watermark source/assets')
- manifest=root/'LATENCY_BUILD_MANIFEST.json'
+ manifest=root/'DIAGNOSTICS_BUILD_MANIFEST.json'
+ if not manifest.exists():manifest=root/'LATENCY_BUILD_MANIFEST.json'
  if not manifest.exists():manifest=root/'INTEGRATION_MANIFEST.json'
  if not manifest.exists():manifest=root/'BUILD_MANIFEST.json'
  if manifest.exists():

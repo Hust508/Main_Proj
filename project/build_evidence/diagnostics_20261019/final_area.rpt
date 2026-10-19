@@ -1,0 +1,403 @@
+standard
+***Report Model: design_top_wrapper Device: PH1P35MDG324***
+
+Design Statistics
+#IO                        58   out of    160   36.25%
+  #input                    2
+  #output                  28
+  #inout                   28
+#lut6                   19862   out of  21216   93.62%
+#reg                    16298
+  #slice reg            16298   out of  42432   38.41%
+  #pad reg                  0
+
+Utilization Statistics
+#slice                  20778   out of  21216   97.94%
+  #used ram               816
+    #dram lut             768
+    #shifter lut           48
+  #used logic           19962
+    #with luts          14677
+    #with adder          4369
+    #reg only             916
+#feedthrough              800
+#f7mux                     61   out of  10608    0.58%
+#f8mux                     24   out of   5304    0.45%
+#eram                      87   out of    108   80.56%
+  #eram20k                 87
+  #fifo20k                  0
+#dsp                       40   out of     40  100.00%
+#ddr_byte                   6   out of     12   50.00%
+#mipi_tx                    1   out of      2   50.00%
+#mipi_rx                    1   out of      2   50.00%
+#pad                       13   out of    160    8.12%
+#pll                        3   out of      6   50.00%
+#gclk                      10   out of     32   31.25%
+#lclk                       0   out of     12    0.00%
+#sclk                      27   out of     48   56.25%
+#mlclk                      2   out of      6   33.33%
+#ioclk                      4   out of     18   22.22%
+
+
+Detailed IO Report
+
+        Name          Direction    Location    IOStandard     IOType    DriveStrength    PullType    PackReg  
+      I_rst_n           INPUT        R10        LVCMOS33       HDIO          N/A          PULLUP      NONE    
+     I_sys_clk          INPUT         C4        LVCMOS33       HDIO          N/A          PULLUP      NONE    
+     O_cam_24m         OUTPUT         V9        LVCMOS33       HDIO           8           PULLUP      NONE    
+     O_cam_rst         OUTPUT         V8        LVCMOS33       HDIO           8           PULLUP      NONE    
+     O_cam_scl         OUTPUT         T9        LVCMOS33       HDIO           8           PULLUP      NONE    
+    O_screen_pwm       OUTPUT        R11        LVCMOS33       HDIO           8          PULLDOWN     NONE    
+  O_screen_reset_n     OUTPUT        T10        LVCMOS33       HDIO           8           PULLUP      NONE    
+    ddr_addr[12]       OUTPUT       S82_5        SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[11]       OUTPUT       S82_47       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[10]       OUTPUT       S82_11       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[9]        OUTPUT       S82_6        SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[8]        OUTPUT       S82_48       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[7]        OUTPUT       S82_7        SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[6]        OUTPUT       S82_49       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[5]        OUTPUT       S82_8        SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[4]        OUTPUT       S82_50       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[3]        OUTPUT       S82_9        SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[2]        OUTPUT       S82_51       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[1]        OUTPUT       S82_10       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_addr[0]        OUTPUT       S82_52       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_ba[1]         OUTPUT       S82_12       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_ba[0]         OUTPUT       S82_13       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_cas_n         OUTPUT       S82_53       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_ck_n[0]        OUTPUT       S82_57     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+    ddr_ck_p[0]        OUTPUT       S82_58     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+     ddr_cke[0]        OUTPUT       S82_15       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_cs_n[0]        OUTPUT       S82_54       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_odt[0]        OUTPUT       S82_55       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_ras_n         OUTPUT       S82_56       SSTL15        DDR           N/A           N/A        NONE    
+      ddr_we_n         OUTPUT       S82_14       SSTL15        DDR           N/A           N/A        NONE    
+     IO_cam_sda         INOUT         U9        LVCMOS33       HDIO           8           PULLUP      NONE    
+    IO_touch_int        INOUT        U10        LVCMOS33       HDIO           8            NONE       NONE    
+    IO_touch_scl        INOUT        P11        LVCMOS33       HDIO           8           PULLUP      NONE    
+    IO_touch_sda        INOUT        R12        LVCMOS33       HDIO           8           PULLUP      NONE    
+    I_button[1]         INOUT        J14        LVCMOS33       HRIO           8           PULLUP      NONE    
+    I_button[0]         INOUT         N2        LVCMOS33       HDIO           8           PULLUP      NONE    
+     ddr_dm[1]          INOUT       S82_37       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dm[0]          INOUT       S82_28       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[15]         INOUT       S82_76       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[14]         INOUT       S82_35       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[13]         INOUT       S82_72       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[12]         INOUT       S82_31       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[11]         INOUT       S82_32       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[10]         INOUT       S82_73       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[9]          INOUT       S82_34       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[8]          INOUT       S82_75       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[7]          INOUT       S82_67       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[6]          INOUT       S82_26       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[5]          INOUT       S82_64       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[4]          INOUT       S82_23       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[3]          INOUT       S82_22       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[2]          INOUT       S82_63       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[1]          INOUT       S82_25       SSTL15        DDR           N/A           N/A        NONE    
+     ddr_dq[0]          INOUT       S82_66       SSTL15        DDR           N/A           N/A        NONE    
+    ddr_dqs_n[1]        INOUT       S82_79     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+    ddr_dqs_n[0]        INOUT       S82_70     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+    ddr_dqs_p[1]        INOUT       S82_78     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+    ddr_dqs_p[0]        INOUT       S82_69     DIFF_SSTL15     DDR           N/A           N/A        NONE    
+
+Report Clock Domain Luts:
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Index   |  Name                                                                                                            |  Frequency   |  LUT As Logic   |  LUT As Shifter   |  LUT As Dram   |  BRAM   |  DSP
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  #1      |  MIPI_RX_BYTE_CLK                                                                                                |  59MHz       |  4059           |  0                |  0             |  18     |  8
+  #2      |  MIPI_TX_BYTE_CLK                                                                                                |  52MHz       |  6249           |  64               |  374           |  36     |  20
+  #3      |  dpll_ref_clk                                                                                                    |  52MHz       |  1              |  0                |  0             |  0      |  0
+  #4      |  pll_clk_100m                                                                                                    |  100MHz      |  137            |  0                |  0             |  0      |  0
+  #5      |  pll_clk_10m                                                                                                     |  10MHz       |  496            |  0                |  0             |  2      |  0
+  #6      |  pll_clk_24m                                                                                                     |  23MHz       |  9684           |  32               |  32            |  33     |  12
+  #7      |  sys_clk_25m                                                                                                     |  25MHz       |  1328           |  0                |  0             |  0      |  0
+  #8      |  u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/u_PH1P_LOGIC_DPHY_MIPI_TX.ln3_data_c16_sample  |  52MHz       |  1              |  0                |  0             |  0      |  0
+  #9      |  u_ph1p35_324_ddr_wrapper/u_ddr2/mcu_clk                                                                         |  50MHz       |  89             |  0                |  52            |  0      |  0
+  #10     |  u_ph1p35_324_ddr_wrapper/u_ddr2/usr_clk                                                                         |  133MHz      |  4790           |  0                |  404           |  12     |  0
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Resource Statistics
+Index     ClockNet                                                                                                                Type                  DriverType         Driver                                                                                                                           ClockFanout        GclkLocation
+#1        O_cam_24m_dup_1                                                                                                         InferredGclk          pll                u_PLL/ph1p_phy_pll_wrapper_25a56e5ce2f9_Inst/u_PH1P_PHY_PLL.clkc1                                                                3334               x23y39z16
+#2        u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_pll1/clkc[0]    UserGclk              pll                u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_pll1/u_pll_inst.clkc0    2335               x23y39z17
+#3        u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/S_hs_tx_clk                                            UserGclk              mipiio             u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/u_PH1P_LOGIC_DPHY_MIPI_TX.o_fabric_div4_8_clk                   1686               x23y39z0
+#4        u_mipi_dphy_rx_ph1p_mipiio_wrapper/u_ph1p_mipiio_rx_wrapper/S_mipiio_hs_rx_clk                                          UserGclk              mipiio             u_mipi_dphy_rx_ph1p_mipiio_wrapper/u_ph1p_mipiio_rx_wrapper/u_PH1P_LOGIC_DPHY_MIPI_RX.o_fabric_div4_8_clk                        1530               x23y39z1
+#5        I_sys_clk_dup_1                                                                                                         InferredGclk          hdio               I_sys_clk_syn_2.di                                                                                                               428                x23y39z22
+#6        u_display_config_wrapper/u_instruction_execution/I_clk                                                                  InferredGclk          pll                u_PLL/ph1p_phy_pll_wrapper_25a56e5ce2f9_Inst/u_PH1P_PHY_PLL.clkc3                                                                328                x23y39z18
+#7        u_PLL/clk0_buf                                                                                                          UserGclk              pll                u_PLL/ph1p_phy_pll_wrapper_25a56e5ce2f9_Inst/u_PH1P_PHY_PLL.clkc0                                                                101                x23y39z19
+#8        u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy/apb_pclk              InferredGclk          pll                u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_pll0/u_pll_inst.clkc3    28                 x23y39z20
+#9        u_uicfgcs500/u_i2c/scl_clk                                                                                              InferredGclk          lslice             u_uicfgcs500/u_i2c/clkdiv_reg[4]_syn_5.oqa                                                                                       16                 x23y39z2
+#10       u_mipi_dphy_tx_over_ph1p_mipiio_wrapper/u_ph1p_mipiio_tx_wrapper/I_mipiio_pll_ref_clk                                   InferredGclk          pll                u_PLL/ph1p_phy_pll_wrapper_25a56e5ce2f9_Inst/u_PH1P_PHY_PLL.clkc2                                                                2                  x23y39z21
+#11       u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/pll0_clk_1        UserMulti-Regional    pll                u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_pll0/u_pll_inst.clkc1    0                  -
+#12       u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/pll0_clk_2        UserMulti-Regional    pll                u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_pll0/u_pll_inst.clkc2    0                  -
+#13       u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/pll0_mlclk_1      UserRegional          mlclk              u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_mlclk_1.clkout           0                  -
+#14       u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/pll0_mlclk_2      UserRegional          mlclk              u_ph1p35_324_ddr_wrapper/u_ddr2/ph1p_ddrmc_wrapper/ph1p_ddrmc_top/u_ddr_phy/u_ddrphy_top/u_ddrphy_clk/u_mlclk_2.clkout           0                  -
+
+Report Hierarchy Area:
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Instance                                                         |Module                                         |logic lut |ripple  |seq     |eram    |dsp     |dram lut |shifter lut |f7mux   |f8mux   |pll     |ddr     |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|top                                                              |design_top_wrapper                             |14677     |4369    |16298   |87      |40      |768      |48          |61      |24      |3       |6       |
+|  u_PLL                                                          |PLL                                            |0         |0       |0       |0       |0       |0        |0           |0       |0       |1       |0       |
+|    ph1p_phy_pll_wrapper_25a56e5ce2f9_Inst                       |ph1p_phy_pll_wrapper_25a56e5ce2f9              |0         |0       |0       |0       |0       |0        |0           |0       |0       |1       |0       |
+|  u_camera_check                                                 |camera_frame_check                             |31        |24      |25      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_csi_unpacket                                                 |csi_unpacket_2lane                             |25        |33      |88      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_diagnostics_telemetry                                        |config_mailbox                                 |30        |0       |53      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_display_config_wrapper                                       |display_config_wrapper                         |244       |52      |496     |2       |0       |0        |0           |0       |0       |0       |0       |
+|    u_instruction_execution                                      |instruction_execution                          |134       |32      |294     |0       |0       |0        |0           |0       |0       |0       |0       |
+|      u_crc16_8b                                                 |crc16_8b                                       |11        |0       |16      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      u_ecc_gen                                                  |ecc_gen                                        |5         |0       |6       |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_instruction_fetch                                          |instruction_fetch                              |47        |0       |93      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_lp_tx_wrapper                                              |lp_tx_wrapper                                  |63        |20      |109     |1       |0       |0        |0           |0       |0       |0       |0       |
+|      u_w8_d1024_fifo                                            |w8_d1024_fifo                                  |19        |20      |32      |1       |0       |0        |0           |0       |0       |0       |0       |
+|        soft_fifo_al_fb5a119d9fb5_Inst                           |soft_fifo_al_fb5a119d9fb5                      |19        |20      |32      |1       |0       |0        |0           |0       |0       |0       |0       |
+|          ram_inst                                               |ram_infer_fb5a119d9fb5                         |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|    u_w8_d1024_rom                                               |w8_d1024_rom                                   |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|      rom_c370f19e17c7_Inst                                      |rom_c370f19e17c7                               |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|  u_gain_apply                                                   |camera_gain_apply                              |12        |0       |15      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_image_config                                                 |config_mailbox                                 |7         |0       |13      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_isp_top                                                      |isp_top                                        |6977      |2766    |7605    |40      |20      |32       |16          |60      |24      |0       |0       |
+|    u_brighten                                                   |rgb_brighten_96                                |0         |96      |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_data_96bit_to_128bit                                       |data_96bit_to_128bit                           |152       |0       |232     |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_demosaic                                                   |demosaic                                       |618       |351     |1076    |12      |0       |0        |0           |0       |0       |0       |0       |
+|      bilinear_interpolation_d                                   |bilinear_interpolation                         |230       |208     |511     |0       |0       |0        |0           |0       |0       |0       |0       |
+|      raw_matrix_3x3_buffer_d                                    |raw_matrix_3x3_buffer                          |388       |143     |565     |12      |0       |0        |0           |0       |0       |0       |0       |
+|        mipi_to_raw_converter_r0                                 |mipi_to_raw_converter                          |19        |0       |38      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        two_line_buffer[1]$line_buffer_demosaic_r1               |line_buffer_demosaic                           |18        |0       |24      |4       |0       |0        |0           |0       |0       |0       |0       |
+|          blk_mem_gen_demosaic_r0                                |blk_mem_gen_demosaic                           |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|            ram_c36c2ca3b3a7_Inst                                |ram_c36c2ca3b3a7                               |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|        two_line_buffer[2]$line_buffer_demosaic_r1               |line_buffer_demosaic                           |18        |0       |26      |4       |0       |0        |0           |0       |0       |0       |0       |
+|          blk_mem_gen_demosaic_r0                                |blk_mem_gen_demosaic                           |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|            ram_c36c2ca3b3a7_Inst                                |ram_c36c2ca3b3a7                               |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|        zhenghe_d                                                |zhenghe                                        |84        |115     |131     |4       |0       |0        |0           |0       |0       |0       |0       |
+|          blk_mem_gen_zhenghe_d1                                 |blk_mem_gen_zhenghe                            |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|            ram_d32970204f32_Inst                                |ram_d32970204f32                               |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|    u_filter_bank                                                |image_filter_bank_96                           |5071      |1899    |5408    |22      |12      |32       |16          |48      |24      |0       |0       |
+|      u_luma                                                     |rgb_luma_96                                    |196       |36      |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|      u_pixel                                                    |pixel_art_96                                   |36        |0       |30      |0       |0       |32       |0           |0       |0       |0       |0       |
+|      u_retro                                                    |sepia_core                                     |975       |148     |332     |4       |0       |0        |0           |0       |0       |0       |0       |
+|        PIXEL[0]$u_pixel                                         |sepia_pixel                                    |243       |35      |79      |1       |0       |0        |0           |0       |0       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |51        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |57        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |68        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_curve                                                |sepia_lut                                      |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|        PIXEL[1]$u_pixel                                         |sepia_pixel                                    |237       |32      |80      |1       |0       |0        |0           |0       |0       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |59        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |53        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |57        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_curve                                                |sepia_lut                                      |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|        PIXEL[2]$u_pixel                                         |sepia_pixel                                    |243       |27      |62      |1       |0       |0        |0           |0       |0       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |62        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |63        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |62        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_curve                                                |sepia_lut                                      |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|        PIXEL[3]$u_pixel                                         |sepia_pixel                                    |218       |27      |62      |1       |0       |0        |0           |0       |0       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |54        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |58        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |63        |9       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_curve                                                |sepia_lut                                      |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|      u_spatial                                                  |enhance_core                                   |3628      |1715    |4536    |18      |12      |0        |16          |48      |24      |0       |0       |
+|        COLOR_AND_EDGE[0]$C                                      |style_quantize_color                           |28        |52      |54      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[0]$E                                      |style_sobel                                    |222       |53      |134     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[0]$Q                                      |style_quantize_fuse                            |123       |48      |58      |0       |3       |0        |0           |12      |6       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |0         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |0         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |0         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          T                                                      |style_tone_gain                                |24        |0       |0       |0       |0       |0        |0           |12      |6       |0       |0       |
+|        COLOR_AND_EDGE[1]$C                                      |style_quantize_color                           |33        |52      |55      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[1]$E                                      |style_sobel                                    |229       |53      |133     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[1]$Q                                      |style_quantize_fuse                            |151       |48      |54      |0       |3       |0        |0           |12      |6       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |2         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |1         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |13        |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          T                                                      |style_tone_gain                                |29        |0       |0       |0       |0       |0        |0           |12      |6       |0       |0       |
+|        COLOR_AND_EDGE[2]$C                                      |style_quantize_color                           |30        |52      |53      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[2]$E                                      |style_sobel                                    |246       |53      |137     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[2]$Q                                      |style_quantize_fuse                            |140       |42      |60      |0       |3       |0        |0           |12      |6       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |0         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |1         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |16        |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          T                                                      |style_tone_gain                                |27        |0       |0       |0       |0       |0        |0           |12      |6       |0       |0       |
+|        COLOR_AND_EDGE[3]$C                                      |style_quantize_color                           |29        |52      |55      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[3]$E                                      |style_sobel                                    |227       |53      |129     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[3]$Q                                      |style_quantize_fuse                            |126       |48      |48      |0       |3       |0        |0           |12      |6       |0       |0       |
+|          B                                                      |unsigned_gain_product                          |0         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          G                                                      |unsigned_gain_product                          |1         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          R                                                      |unsigned_gain_product                          |9         |0       |0       |0       |1       |0        |0           |0       |0       |0       |0       |
+|          T                                                      |style_tone_gain                                |28        |0       |0       |0       |0       |0        |0           |12      |6       |0       |0       |
+|        ED                                                       |enhance_window                                 |380       |0       |1024    |9       |0       |0        |0           |0       |0       |0       |0       |
+|        ENC[0]$C                                                 |enhance_rgb_to_yc                              |0         |35      |26      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        ENC[1]$C                                                 |enhance_rgb_to_yc                              |0         |35      |26      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        ENC[2]$C                                                 |enhance_rgb_to_yc                              |0         |35      |26      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        ENC[3]$C                                                 |enhance_rgb_to_yc                              |0         |35      |26      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        NR                                                       |enhance_window                                 |375       |0       |1025    |9       |0       |0        |0           |0       |0       |0       |0       |
+|        SMOOTH[0]$S                                              |style_sigma                                    |279       |203     |259     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        SMOOTH[1]$S                                              |style_sigma                                    |268       |203     |232     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        SMOOTH[2]$S                                              |style_sigma                                    |289       |203     |263     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        SMOOTH[3]$S                                              |style_sigma                                    |280       |232     |270     |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[2]$T                                      |enhance_lut                                    |5         |0       |10      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[3]$T                                      |enhance_lut                                    |5         |0       |10      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[0]$T                                      |enhance_lut                                    |0         |0       |8       |0       |0       |0        |0           |0       |0       |0       |0       |
+|        COLOR_AND_EDGE[1]$T                                      |enhance_lut                                    |1         |0       |4       |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_filter_clock_bridge                                        |filter_clock_bridge                            |114       |22      |95      |6       |0       |0        |0           |0       |0       |0       |0       |
+|      u_fifo                                                     |frame_stream_fifo                              |110       |22      |88      |6       |0       |0        |0           |0       |0       |0       |0       |
+|    u_tint                                                       |wb_tint_96                                     |564       |108     |237     |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_white_balance                                              |wb_balance_96                                  |448       |290     |538     |0       |8       |0        |0           |12      |0       |0       |0       |
+|      lut                                                        |wb_gain_lut                                    |24        |0       |0       |0       |0       |0        |0           |12      |0       |0       |0       |
+|      ratio                                                      |wb_ratio_seq                                   |74        |26      |108     |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_mc_to_user_interface                                         |mc_to_user_interface                           |115       |18      |39      |4       |0       |0        |0           |0       |0       |0       |0       |
+|    U_w155_d512_fifo                                             |w155_d512_fifo                                 |93        |18      |29      |4       |0       |0        |0           |0       |0       |0       |0       |
+|      soft_fifo_al_f58e8b3e1f3d_Inst                             |soft_fifo_al_f58e8b3e1f3d                      |28        |18      |29      |4       |0       |0        |0           |0       |0       |0       |0       |
+|        ram_inst                                                 |ram_infer_f58e8b3e1f3d                         |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|  u_mipi_dphy_rx_ph1p_mipiio_wrapper                             |mipi_dphy_rx_ph1p_mipiio_wrapper               |143       |0       |233     |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_byte_aligner_wrapper                                       |byte_aligner_wrapper                           |85        |0       |110     |0       |0       |0        |0           |0       |0       |0       |0       |
+|      BYTE_ALIGNER_GEN[0]$u_byte_aligner                         |byte_aligner                                   |47        |0       |58      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      BYTE_ALIGNER_GEN[1]$u_byte_aligner                         |byte_aligner                                   |38        |0       |52      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_ph1p_mipiio_rx_wrapper                                     |ph1p_mipiio_rx_wrapper                         |19        |0       |35      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      u_lane0_hs_detect                                          |hs_detect                                      |7         |0       |12      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_channel_aligner_wrapper                                    |channel_aligner_wrapper                        |39        |0       |88      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      ALIGNER_CHANNEL_GEN[0]$u_channel_aligner                   |channel_aligner                                |24        |0       |45      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      ALIGNER_CHANNEL_GEN[1]$u_channel_aligner                   |channel_aligner                                |15        |0       |43      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_mipi_dphy_tx_over_ph1p_mipiio_wrapper                        |mipi_dphy_tx_over_ph1p_mipiio_wrapper          |61        |49      |345     |0       |0       |0        |32          |0       |0       |0       |0       |
+|    u_hs_tx_wrapper                                              |hs_tx_wrapper                                  |58        |49      |266     |0       |0       |0        |32          |0       |0       |0       |0       |
+|      MIPI_DATA_LANE_GEN[0]$u_data_lane_wrapper                  |data_lane_wrapper                              |33        |49      |112     |0       |0       |0        |32          |0       |0       |0       |0       |
+|        u_data_hs_generate                                       |data_hs_generate                               |24        |49      |87      |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_dphy_tx_fifo                                         |dphy_tx_fifo                                   |0         |0       |17      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        u_data_lp_generate                                       |data_lp_generate                               |3         |0       |8       |0       |0       |0        |0           |0       |0       |0       |0       |
+|      u_hs_tx_controler                                          |hs_tx_controler                                |8         |0       |12      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      MIPI_DATA_LANE_GEN[1]$u_data_lane_wrapper                  |data_lane_wrapper                              |6         |0       |44      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        u_data_hs_generate                                       |data_hs_generate                               |6         |0       |44      |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_dphy_tx_fifo                                         |dphy_tx_fifo                                   |1         |0       |20      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      MIPI_DATA_LANE_GEN[3]$u_data_lane_wrapper                  |data_lane_wrapper                              |9         |0       |68      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        u_data_hs_generate                                       |data_hs_generate                               |9         |0       |68      |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_dphy_tx_fifo                                         |dphy_tx_fifo                                   |2         |0       |26      |0       |0       |0        |0           |0       |0       |0       |0       |
+|      MIPI_DATA_LANE_GEN[2]$u_data_lane_wrapper                  |data_lane_wrapper                              |2         |0       |30      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        u_data_hs_generate                                       |data_hs_generate                               |2         |0       |30      |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_dphy_tx_fifo                                         |dphy_tx_fifo                                   |0         |0       |12      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_ph1p_mipiio_tx_wrapper                                     |ph1p_mipiio_tx_wrapper                         |3         |0       |79      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_original_osd                                                 |dsi_osd_overlay                                |189       |44      |83      |23      |0       |0        |0           |0       |0       |0       |0       |
+|    u_logo                                                       |osd_logo_rom                                   |8         |0       |3       |23      |0       |0        |0           |0       |0       |0       |0       |
+|  u_ph1p35_324_ddr_wrapper                                       |ph1p35_324_ddr_wrapper                         |2313      |111     |3444    |0       |0       |296      |0           |0       |0       |2       |6       |
+|    u_ddr2                                                       |ddr2                                           |2313      |111     |3444    |0       |0       |296      |0           |0       |0       |2       |6       |
+|      ph1p_ddrmc_wrapper                                         |ph1p_ddrmc_wrapper_63f4ac254419                |2313      |111     |3444    |0       |0       |296      |0           |0       |0       |2       |6       |
+|        ph1p_ddrmc_top                                           |ph1p_ddrmc_top                                 |2313      |111     |3444    |0       |0       |296      |0           |0       |0       |2       |6       |
+|          u_alc_mc_top                                           |alc_mc_top                                     |1409      |11      |2091    |0       |0       |176      |0           |0       |0       |0       |0       |
+|            page_ctrl[0]$u_page_ctrl                             |alc_page_ctrl                                  |246       |0       |373     |0       |0       |0        |0           |0       |0       |0       |0       |
+|            page_ctrl[1]$u_page_ctrl                             |alc_page_ctrl                                  |211       |0       |316     |0       |0       |0        |0           |0       |0       |0       |0       |
+|            page_ctrl[2]$u_page_ctrl                             |alc_page_ctrl                                  |194       |0       |318     |0       |0       |0        |0           |0       |0       |0       |0       |
+|            page_ctrl[3]$u_page_ctrl                             |alc_page_ctrl                                  |217       |0       |326     |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_arb_act                                            |alc_arb_act                                    |7         |0       |10      |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_arb_cas                                            |alc_arb_cas                                    |16        |0       |9       |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_arb_mux_cas                                        |alc_arb_mux_cas                                |3         |0       |0       |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_arb_mux_pre                                        |alc_arb_mux_pre                                |43        |0       |49      |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_arb_pre                                          |alc_arb_pre                                    |11        |0       |9       |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_arb_rd_wr                                          |alc_arb_rd_wr                                  |77        |0       |99      |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_wtr_check                                        |alc_wtr_check                                  |3         |0       |4       |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_axi_rx                                             |alc_axi_rx_simple                              |29        |0       |49      |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_rbuf_addr_fifo                                     |ph1p_ddr_fifo_dram_sync                        |11        |0       |18      |0       |0       |8        |0           |0       |0       |0       |0       |
+|            u_rd_data                                            |alc_rd_data                                    |90        |0       |163     |0       |0       |80       |0           |0       |0       |0       |0       |
+|              rd_buffer[0]$u_rd_data_buf                         |alc_mc_spram                                   |0         |0       |0       |0       |0       |64       |0           |0       |0       |0       |0       |
+|              u_status_ram0                                      |alc_mc_spram                                   |0         |0       |0       |0       |0       |8        |0           |0       |0       |0       |0       |
+|              u_status_ram1                                      |alc_mc_spram                                   |0         |0       |0       |0       |0       |8        |0           |0       |0       |0       |0       |
+|            u_ref_ctrl                                           |alc_ref_ctrl                                   |29        |11      |37      |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_wbuf_addr_fifo                                     |ph1p_ddr_fifo_dram_sync                        |7         |0       |12      |0       |0       |8        |0           |0       |0       |0       |0       |
+|            u_wr_data                                            |alc_wr_data                                    |218       |0       |297     |0       |0       |80       |0           |0       |0       |0       |0       |
+|              u_ptr_ram0                                         |alc_mc_spram                                   |0         |0       |4       |0       |0       |8        |0           |0       |0       |0       |0       |
+|              u_ptr_ram1                                         |alc_mc_spram                                   |0         |0       |0       |0       |0       |8        |0           |0       |0       |0       |0       |
+|              wr_buffer[0]$u_wdata_ram                           |alc_mc_spram                                   |0         |0       |128     |0       |0       |64       |0           |0       |0       |0       |0       |
+|            u_periodic_rd                                        |alc_periodic_rd                                |2         |0       |3       |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_act_timer                                          |alc_act_timer                                  |6         |0       |8       |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_act_check                                        |alc_act_check                                  |6         |0       |8       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_ddr_phy                                              |ph1p_ddrphy_wrapper                            |823       |100     |1071    |0       |0       |56       |0           |0       |0       |2       |6       |
+|            u_ddrphy_dram_init                                   |ph1p_ddrphy_dram_init                          |41        |32      |54      |0       |0       |0        |0           |0       |0       |0       |0       |
+|            u_ddrphy_top                                         |ph1p_ddrphy_top                                |775       |36      |985     |0       |0       |56       |0           |0       |0       |2       |6       |
+|              u_ddrphy                                           |ph1p_ddrphy                                    |36        |0       |0       |0       |0       |0        |0           |0       |0       |0       |6       |
+|                ac_byte[0]$ac_byte_used$u_ddrphy_ac_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |0         |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|                ac_byte[1]$ac_byte_used$u_ddrphy_ac_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |0         |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|                ac_byte[2]$ac_byte_used$u_ddrphy_ac_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |0         |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|                ac_byte[3]$ac_byte_used$u_ddrphy_ac_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |2         |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|                dx_byte[0]$dx_byte_used$u_ddrphy_dx_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |7         |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|                dx_byte[1]$dx_byte_used$u_ddrphy_dx_byte_wrapper |ph1p_ddrphy_byte_wrapper                       |15        |0       |0       |0       |0       |0        |0           |0       |0       |0       |1       |
+|              u_ddrphy_clk                                       |ph1p_ddrphy_clk_top                            |0         |0       |0       |0       |0       |0        |0           |0       |0       |2       |0       |
+|                u_pll0                                           |ph1p_ddrphy_pll0                               |0         |0       |0       |0       |0       |0        |0           |0       |0       |1       |0       |
+|                u_pll1                                           |ph1p_ddrphy_pll1                               |0         |0       |0       |0       |0       |0        |0           |0       |0       |1       |0       |
+|              u_ddrphy_cmd_wrapper                               |ph1p_ddrphy_cmd_wrapper                        |430       |0       |467     |0       |0       |0        |0           |0       |0       |0       |0       |
+|                rphase[0]$u_ddrphy_rphase_ctl                    |ph1p_ddrphy_rphase_ctl                         |27        |0       |38      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                rphase[1]$u_ddrphy_rphase_ctl                    |ph1p_ddrphy_rphase_ctl                         |22        |0       |31      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                u_ddrphy_cmd_execution                           |ph1p_ddrphy_cmd_execution                      |56        |0       |81      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                  cmd_decode[0]$u_ddrphy_cmd_decode              |ph1p_ddrphy_cmd_decode                         |15        |0       |18      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                  cmd_decode[1]$u_ddrphy_cmd_decode              |ph1p_ddrphy_cmd_decode                         |13        |0       |16      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                  cmd_decode[3]$u_ddrphy_cmd_decode              |ph1p_ddrphy_cmd_decode                         |5         |0       |5       |0       |0       |0        |0           |0       |0       |0       |0       |
+|                wphase[0]$u_ddrphy_wphase_ctl                    |ph1p_ddrphy_wphase_ctl                         |166       |0       |162     |0       |0       |0        |0           |0       |0       |0       |0       |
+|                wphase[1]$u_ddrphy_wphase_ctl                    |ph1p_ddrphy_wphase_ctl                         |159       |0       |155     |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_ddrphy_dcu_wrapper                               |ph1p_ddrphy_dcu_wrapper                        |27        |0       |39      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                byteIdx[0]$u_ddrphy_dcu                          |ph1p_ddrphy_dcu                                |13        |0       |18      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                byteIdx[1]$u_ddrphy_dcu                          |ph1p_ddrphy_dcu                                |14        |0       |21      |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_ddrphy_init                                      |ph1p_ddrphy_init                               |24        |0       |29      |0       |0       |56       |0           |0       |0       |0       |0       |
+|              u_ddrphy_mdl_cal_wrapper                           |ph1p_ddrphy_mdl_cal_wrapper                    |79        |36      |124     |0       |0       |0        |0           |0       |0       |0       |0       |
+|                mdl_cal[0]$u_ddrphy_mdl_cal                      |ph1p_ddrphy_mdl_cal                            |39        |18      |59      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                mdl_cal[1]$u_ddrphy_mdl_cal                      |ph1p_ddrphy_mdl_cal                            |39        |18      |63      |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_ddrphy_fiu_wrapper                               |ph1p_ddrphy_fast_init_wrapper                  |176       |0       |320     |0       |0       |0        |0           |0       |0       |0       |0       |
+|                byteIdx[0]$u_ddrphy_fast_init                    |ph1p_ddrphy_fast_init                          |22        |0       |35      |0       |0       |0        |0           |0       |0       |0       |0       |
+|                byteIdx[1]$u_ddrphy_fast_init                    |ph1p_ddrphy_fast_init                          |17        |0       |33      |0       |0       |0        |0           |0       |0       |0       |0       |
+|              u_ddrphy_rst_gen                                   |ph1p_ddrphy_sync_rst_gen                       |1         |0       |2       |0       |0       |0        |0           |0       |0       |0       |0       |
+|          u_phy2mc_fifo                                          |alc_phy2mc_fifo_ctrl                           |81        |0       |282     |0       |0       |64       |0           |0       |0       |0       |0       |
+|            byteIdx_1[0]$u_wfifo_sync                            |ph1p_ddr_fifo_dram_sync                        |9         |0       |78      |0       |0       |32       |0           |0       |0       |0       |0       |
+|            byteIdx_1[1]$u_wfifo_sync                            |ph1p_ddr_fifo_dram_sync                        |7         |0       |76      |0       |0       |32       |0           |0       |0       |0       |0       |
+|  u_rgb_24b_to_32b                                               |rgb_24b_to_32b                                 |53        |18      |121     |1       |0       |0        |0           |0       |0       |0       |0       |
+|    u_w32_d512_fifo                                              |w32_d512_fifo                                  |18        |18      |29      |1       |0       |0        |0           |0       |0       |0       |0       |
+|      soft_fifo_al_c8ca1d511100_Inst                             |soft_fifo_al_c8ca1d511100                      |13        |18      |29      |1       |0       |0        |0           |0       |0       |0       |0       |
+|        ram_inst                                                 |ram_infer_c8ca1d511100                         |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|  u_rgb_target_video                                             |rgb_target_video                               |1679      |793     |1327    |0       |20      |440      |0           |0       |0       |0       |0       |
+|    detector                                                     |red_target_detect                              |1264      |638     |1055    |0       |20      |440      |0           |0       |0       |0       |0       |
+|      shape_classifier                                           |red_shape_classify                             |1118      |540     |834     |0       |20      |440      |0           |0       |0       |0       |0       |
+|  u_touch                                                        |gt911_pointer                                  |204       |69      |285     |0       |0       |0        |0           |1       |0       |0       |0       |
+|    bus                                                          |i2c_reg16_byte                                 |95        |32      |133     |0       |0       |0        |0           |1       |0       |0       |0       |
+|  u_touch_map                                                    |touch_coord_map                                |148       |68      |152     |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_ui_control                                                   |wb_ui_control                                  |304       |48      |194     |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_uial2axis                                                    |uial2axis                                      |21        |0       |28      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_uicfgcs500                                                   |uicfgcs500_720p                                |128       |18      |98      |1       |0       |0        |0           |0       |0       |0       |0       |
+|    u_i2c                                                        |uii2c                                          |31        |0       |32      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_gain_table                                                 |SC500GainTbl                                   |0         |0       |0       |1       |0       |0        |0           |0       |0       |0       |0       |
+|  u_video_in                                                     |video_in                                       |264       |84      |429     |4       |0       |0        |0           |0       |0       |0       |0       |
+|    fifo                                                         |frame_stream_fifo                              |84        |0       |80      |4       |0       |0        |0           |0       |0       |0       |0       |
+|  u_video_out                                                    |video_out                                      |270       |117     |318     |4       |0       |0        |0           |0       |0       |0       |0       |
+|    U_w128_d512_fifo                                             |w128_d512_fifo                                 |41        |18      |94      |4       |0       |0        |0           |0       |0       |0       |0       |
+|      soft_fifo_al_4057d6b76aa6_Inst                             |soft_fifo_al_4057d6b76aa6                      |41        |18      |94      |4       |0       |0        |0           |0       |0       |0       |0       |
+|        wr_to_rd_cross_inst                                      |fifo_cross_domain_addr_process_al_4057d6b76aa6 |13        |0       |36      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        rd_to_wr_cross_inst                                      |fifo_cross_domain_addr_process_al_4057d6b76aa6 |15        |0       |36      |0       |0       |0        |0           |0       |0       |0       |0       |
+|        ram_inst                                                 |ram_infer_4057d6b76aa6                         |0         |0       |0       |4       |0       |0        |0           |0       |0       |0       |0       |
+|    u_frame_latency_meter                                        |frame_latency_meter                            |18        |3       |9       |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_video_source                                                 |video_source                                   |23        |12      |31      |0       |0       |0        |0           |0       |0       |0       |0       |
+|    u_video_tpg_8001280                                          |video_tpg                                      |23        |12      |31      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_wb_config                                                    |config_mailbox                                 |23        |0       |44      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_wb_ui_overlay                                                |wb_ui_overlay                                  |1144      |0       |219     |8       |0       |0        |0           |0       |0       |0       |0       |
+|    rom                                                          |wb_ui_font                                     |559       |0       |5       |8       |0       |0        |0           |0       |0       |0       |0       |
+|  u_raw10_unpacket                                               |raw10_unpacket_2lane                           |48        |0       |137     |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_dsi_reset                                                    |display_reset_sync                             |0         |0       |2       |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_gain_config                                                  |config_mailbox                                 |10        |0       |21      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_latency_telemetry                                            |config_mailbox                                 |13        |0       |27      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_lp_reset                                                     |display_reset_sync                             |0         |0       |2       |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_read_reset                                                   |display_reset_sync                             |0         |0       |2       |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_touch_reset                                                  |display_reset_sync                             |0         |0       |2       |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_ui_config                                                    |config_mailbox                                 |43        |0       |85      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_wb_telemetry                                                 |config_mailbox                                 |27        |0       |57      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  CAMERA_IMAGE$u_mixer                                           |mixer                                          |16        |0       |30      |0       |0       |0        |0           |0       |0       |0       |0       |
+|  u_dsi_video_mode_packet                                        |dsi_video_mode_packet                          |19        |0       |69      |0       |0       |0        |0           |0       |0       |0       |0       |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+DataNet Average Fanout:
+
+   Index     Fanout     Nets   
+    #1          1       40898  
+    #2          2       9329   
+    #3          3       2774   
+    #4          4       1777   
+    #5        5-10      4496   
+    #6        11-50     1048   
+    #7       51-100      98    
+    #8       101-500     18    
+  Average     2.25             
