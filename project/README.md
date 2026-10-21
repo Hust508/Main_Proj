@@ -24,4 +24,8 @@ TD 入口为 `td_project/wb_ui_dsi.al`，顶层为 `design_top_wrapper`。默认
 延迟指标的定义、RTL 数据通路、验证方法和光学端到端测量边界见 [`../docs/LATENCY_VISUALIZATION.md`](../docs/LATENCY_VISUALIZATION.md)。
 诊断页布局、计数含义和验收方法见 [`../docs/DIAGNOSTICS_UI.md`](../docs/DIAGNOSTICS_UI.md)。
 
+## 独立 TF 录像版
+
+录像版镜像为 `TF_RECORDING_7inch_compress.bit`，卡片准备、UI 操作、现有功能取舍和验证边界见 [TF_RECORDING.md](docs/TF_RECORDING.md)。它使用 `recording_top`，与上述完整版镜像分开构建；运行 `./build_recording.ps1 -TdHome D:/Anlogic/TD`。本地已生成待写卡镜像 `D:\FPGA\record_card.img`，物理卡未被改写。
+
 本次未连接实体开发板。`DSI_SHAPE_*` 和旧阶段日志属于历史来源，不代表本次统一版镜像。

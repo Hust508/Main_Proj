@@ -8,9 +8,11 @@
 | 当前 UI / 操作与接口 | [统一版说明](docs/latest/README.md) |
 | 延迟指标、实现和验收方法 | [采集到显示的延迟可视化](docs/LATENCY_VISUALIZATION.md) |
 | 诊断页、计数含义和操作 | [预览与诊断页面](docs/DIAGNOSTICS_UI.md) |
+| TF 卡录像版设计、卡片准备与操作 | [录像版说明](project/docs/TF_RECORDING.md) |
 | TD 工程 | [wb_ui_dsi.al](project/td_project/wb_ui_dsi.al) |
 | 推荐下载镜像 | [DSI_UNIFIED_SC500_7inch_compress.bit](project/DSI_UNIFIED_SC500_7inch_compress.bit) |
 | 普通镜像 | [DSI_UNIFIED_SC500_7inch.bit](project/DSI_UNIFIED_SC500_7inch.bit) |
+| 独立录像版镜像 | [TF_RECORDING_7inch_compress.bit](project/TF_RECORDING_7inch_compress.bit) |
 | 本次验证和最终时序 | [BUILD_REPORT.md](project/BUILD_REPORT.md) |
 
 - 单指长按预览约 800 ms，打开右侧设置面板；逐级回退返回。

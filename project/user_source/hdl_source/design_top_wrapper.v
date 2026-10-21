@@ -4,7 +4,8 @@ module design_top_wrapper #(
     parameter DISPLAY_TEST_PATTERN = 0, // 0: camera; 1: vendor generated test pattern
     parameter TOUCH_AUTO_SWAP = 1,
     parameter TOUCH_INVERT_X = 0,
-    parameter TOUCH_INVERT_Y = 0
+    parameter TOUCH_INVERT_Y = 0,
+    parameter RECORDING_BUILD = 0
 ) (
     input wire        I_sys_clk,
     input wire        I_rst_n,
@@ -21,6 +22,14 @@ module design_top_wrapper #(
     inout wire        IO_touch_scl,
     inout wire        IO_touch_sda,
     inout wire        IO_touch_int,
+
+    input wire        I_tf_cd_n,
+    input wire        I_tf_miso,
+    output wire       O_tf_cs_n,
+    output wire       O_tf_clk,
+    output wire       O_tf_mosi,
+    output wire       O_tf_data1,
+    output wire       O_tf_data2,
 
     inout wire        IO_tx_clk_pad_n,
     inout wire        IO_tx_clk_pad_p,
@@ -262,6 +271,9 @@ module design_top_wrapper #(
     wire [36:0] S_wb_telemetry,S_wb_telemetry_display;
     wire [38:0] S_ui_display;
     wire S_detect_enable,S_tag_enable,S_wb_key_axis;
+    wire S_record_request;
+    wire [2:0] S_record_status,S_record_status_display;
+    wire [11:0] S_record_frames;
     wire S_touch_reset_n;
     display_reset_sync u_touch_reset (
         .I_clk(I_sys_clk),.I_async_reset_n(I_rst_n),.O_reset_n(S_touch_reset_n));
@@ -275,9 +287,10 @@ module design_top_wrapper #(
         .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),.I_report(S_pointer_report),.I_contacts(S_pointer_contacts),
         .I_x(S_pointer_x),.I_y(S_pointer_y),.I_width(S_touch_width),.I_height(S_touch_height),
         .O_report(S_ui_report),.O_contacts(S_ui_contacts),.O_x(S_ui_x),.O_y(S_ui_y));
-    wb_ui_control u_ui_control (
+    wb_ui_control #(.RECORDING_BUILD(RECORDING_BUILD)) u_ui_control (
         .I_clk(I_sys_clk),.I_rst_n(S_touch_reset_n),.I_online(S_touch_online),
         .I_report(S_ui_report),.I_contacts(S_ui_contacts),.I_x(S_ui_x),.I_y(S_ui_y),.I_buttons_n(I_button),
+        .I_record_status(S_record_status),.O_record_request(S_record_request),
         .O_page(S_ui_page),.O_mode(S_wb_mode),.O_preset(S_wb_preset),
         .O_index(S_wb_index),.O_gain(S_ui_gain),.O_detect_enable(S_detect_enable),
         .O_tag_enable(S_tag_enable),.O_image_mode(S_image_mode),
@@ -291,6 +304,9 @@ module design_top_wrapper #(
     config_mailbox #(.WIDTH(3),.RESET_VALUE(3'd0)) u_image_config (
         .I_src_clk(I_sys_clk),.I_dst_clk(S_csi_rx_clk),.I_rst_n(S_rst_n),
         .I_data(S_image_mode),.O_data(S_image_mode_camera));
+    config_mailbox #(.WIDTH(3),.RESET_VALUE(3'd0)) u_record_status (
+        .I_src_clk(I_sys_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
+        .I_data(S_record_status),.O_data(S_record_status_display));
     config_mailbox #(.WIDTH(39),.RESET_VALUE({1'b0,5'd0,5'd0,1'b0,1'b0,4'd0,2'd0,2'd1,7'd30,7'd80,3'd0,1'b0})) u_ui_config (
         .I_src_clk(I_sys_clk),.I_dst_clk(S_dsi_tx_clk),.I_rst_n(S_rst_n),
         .I_data({S_wb_key_axis,S_wb_ab,S_wb_gm,S_detect_enable,S_tag_enable,
@@ -786,7 +802,7 @@ assign S_raw_tuser  = S_axis_tuser;
 wire S_filter_cdc_overflow;
 isp_top u_isp_top (
 .I_process_clk(S_24m_clk),.O_cdc_overflow(S_filter_cdc_overflow),
-.I_wb_config(S_wb_camera),.I_image_mode(S_image_mode_camera),
+.I_wb_config(S_wb_camera),.I_image_mode(RECORDING_BUILD ? 3'd0 : S_image_mode_camera),
 .O_wb_telemetry(S_wb_telemetry),.I_previous_bad(S_previous_bad), .O_frame_mode(S_isp_frame_mode),
 .axi4s_video_aclk(S_csi_rx_clk),
 .I_rst_n         (S_rst_n),
@@ -999,13 +1015,41 @@ isp_top u_isp_top (
     );
     end endgenerate
 
+    generate if (RECORDING_BUILD != 0) begin : TF_RECORDING
+        assign O_tf_data1=1'b1;
+        assign O_tf_data2=1'b1;
+        tf_avi_recorder u_tf_recorder (
+            .I_clk(I_sys_clk),.I_video_clk(S_dsi_tx_clk),
+            .I_rst_n(S_dsi_ready_n),.I_card_detect_n(I_tf_cd_n),
+            .I_record_request(S_record_request),
+            .I_vsync(S_base_vsync),.I_de(S_base_de),.I_rgb(S_base_data),
+            .O_sd_cs_n(O_tf_cs_n),.O_sd_clk(O_tf_clk),
+            .O_sd_mosi(O_tf_mosi),.I_sd_miso(I_tf_miso),
+            .O_status(S_record_status),.O_frames(S_record_frames));
+    end else begin : NO_TF_RECORDING
+        assign O_tf_cs_n=1'b1;
+        assign O_tf_clk=1'b0;
+        assign O_tf_mosi=1'b1;
+        assign O_tf_data1=1'b1;
+        assign O_tf_data2=1'b1;
+        assign S_record_status=3'd0;
+        assign S_record_frames=12'd0;
+    end endgenerate
+
     wire S_target_vsync,S_target_hsync,S_target_de;
     wire [23:0] S_target_data;
+    generate if (RECORDING_BUILD == 0) begin : WITH_TARGET_TRACKING
     rgb_target_video u_rgb_target_video (
         .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),
         .I_enable(S_ui_frame_active[27]),.I_page(S_ui_frame_active[25:22]),
         .I_vsync(S_base_vsync),.I_hsync(S_base_hsync),.I_de(S_base_de),.I_data(S_base_data),
         .O_vsync(S_target_vsync),.O_hsync(S_target_hsync),.O_de(S_target_de),.O_data(S_target_data));
+    end else begin : NO_TARGET_TRACKING
+        assign S_target_vsync=S_base_vsync;
+        assign S_target_hsync=S_base_hsync;
+        assign S_target_de=S_base_de;
+        assign S_target_data=S_base_data;
+    end endgenerate
 
     // Delay the complete config with the detector's three video registers.
     // Even a mailbox update near VS cannot split the UI and target state.
@@ -1023,10 +1067,11 @@ isp_top u_isp_top (
         S_ui_display_d1<=S_ui_frame_active;S_ui_display_d2<=S_ui_display_d1;S_ui_display_d3<=S_ui_display_d2;S_ui_display_d4<=S_ui_display_d3;S_ui_display_d5<=S_ui_display_d4;
     end
     wire S_ui_vsync,S_ui_hsync,S_ui_de;wire [23:0] S_ui_data;
-    wb_ui_overlay u_wb_ui_overlay (
+    wb_ui_overlay #(.RECORDING_BUILD(RECORDING_BUILD)) u_wb_ui_overlay (
         .I_clk(S_dsi_tx_clk),.I_rst_n(S_dsi_ready_n),.I_config(S_ui_display_d3),.I_telemetry(S_wb_telemetry_display),
         .I_latency(S_latency_display),.I_diagnostics(S_diagnostics_display),
         .I_underflow((|S_read_underflow_count[31:8])?8'hff:S_read_underflow_count[7:0]),
+        .I_record_status(S_record_status_display),
         .I_vsync(S_target_vsync),.I_hsync(S_target_hsync),.I_de(S_target_de),.I_data(S_target_data),
         .O_vsync(S_ui_vsync),.O_hsync(S_ui_hsync),.O_de(S_ui_de),.O_data(S_ui_data));
     // Exact touch123 watermark assets/coordinates/colors. Keep UI controls

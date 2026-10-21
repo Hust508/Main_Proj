@@ -1,9 +1,11 @@
 // Two-stage RGB overlay; UI config is captured once per display frame.
-module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/wb_ui_font.hex")(
+module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/wb_ui_font.hex",
+                       RECORDING_BUILD=0)(
  input wire I_clk,I_rst_n,input wire [38:0] I_config,
  input wire [36:0] I_telemetry,
  input wire [8:0] I_latency,
  input wire [23:0] I_diagnostics,input wire [7:0] I_underflow,
+ input wire [2:0] I_record_status,
  input wire I_vsync,I_hsync,I_de,input wire [23:0] I_data,
  output reg O_vsync,O_hsync,O_de,output reg [23:0] O_data
 );
@@ -23,6 +25,8 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  reg [23:0] diagnostics_cfg;reg [7:0] underflow_cfg;
  wire [23:0] diagnostics=(pending||frame_start)?I_diagnostics:diagnostics_cfg;
  wire [7:0] underflow=(pending||frame_start)?I_underflow:underflow_cfg;
+ reg [2:0] record_status_cfg;
+ wire [2:0] record_status=(pending||frame_start)?I_record_status:record_status_cfg;
  wire latency_valid=latency[8];
  wire [7:0] latency_frames=latency[7:0];
  // Eight shift/add-3 steps turn an 8-bit counter into three BCD digits.
@@ -63,7 +67,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
  wire [10:0] thumb_x=11'd600+index*11'd5;
  wire [10:0] gain_x=11'd600+gain_level*11'd5;
  always @(posedge I_clk or negedge I_rst_n)
- if(!I_rst_n)begin latency_cfg<=0;diagnostics_cfg<=0;underflow_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
+ if(!I_rst_n)begin record_status_cfg<=0;latency_cfg<=0;diagnostics_cfg<=0;underflow_cfg<=0;telemetry_cfg<={1'b0,12'd1024,12'd1024,12'd1024};cfg<=CONFIG_RESET;vs_d<=0;de_d<=0;pending<=1;x_count<=0;y_count<=0;end
  else begin
   vs_d<=I_vsync;de_d<=I_de;
   if(frame_start)begin x_count<=I_de?11'd1:11'd0;y_count<=0;pending<=1;end
@@ -71,7 +75,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
    if(I_de)x_count<=x_count+1'b1;else x_count<=0;
    if(de_d&&!I_de)y_count<=y_count+1'b1;
   end
-  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;diagnostics_cfg<=I_diagnostics;underflow_cfg<=I_underflow;pending<=0;end
+  if(I_de&&(pending||frame_start))begin cfg<=I_config;telemetry_cfg<=I_telemetry;latency_cfg<=I_latency;diagnostics_cfg<=I_diagnostics;underflow_cfg<=I_underflow;record_status_cfg<=I_record_status;pending<=0;end
  end
  // GENERATED_GLYPHS
  function automatic in_rect(input [10:0] px,py,input integer left,top,right,bottom);
@@ -93,6 +97,10 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
   background=I_data;foreground=24'hf3f6fa;text_on=0;text_id=0;origin_x=0;origin_y=0;
   if(page==0)begin
    if(y<64||y>=548)background={2'b0,I_data[23:18],2'b0,I_data[15:10],2'b0,I_data[7:2]};
+   if(record_status==2 || record_status==3)begin
+    if(in_rect(x,y,12,19,20,27))background=24'he34250;
+    label(record_status==2?79:80,28,20,3);
+   end
    label(mode==0?1:mode==1?2:3,176,20,8);
    if(mode!=0)label(28,400,20,6);
    label(image_mode==0?55:image_mode==1?56:image_mode==2?57:image_mode==3?58:image_mode==4?59:image_mode==5?60:image_mode==6?63:38,600,20,4);
@@ -117,7 +125,7 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      if(in_rect(x,y,584,352,1000,416))background=24'h26394d;
      if(in_rect(x,y,584,432,784,496)||in_rect(x,y,800,432,1000,496))background=24'h26394d;
      label(7,620,132,5);label(8,620,212,4);label(9,620,292,5);label(10,620,372,3);
-     label(53,648,452,3);label(54,864,452,3);
+     label(RECORDING_BUILD!=0?84:53,648,452,3);label(54,864,452,3);
      if(in_rect(x,y,584,504,1000,556))background=24'h26394d;
      label(65,732,518,4);
     end
@@ -127,8 +135,8 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
      if(x>=600&&x<984&&y>=224&&y<236)background=x<(600+(telemetry[23:12]>>3))?24'h50bd86:24'h34495e;
      if(x>=600&&x<984&&y>=294&&y<306)background=x<(600+(telemetry[11:0]>>3))?24'h609cea:24'h34495e;
      label(telemetry[36]?41:42,600,332,5);
-     if(in_rect(x,y,600,400,1000,472))background=detect_enable?24'h087f83:24'h26394d;
-     label(35,620,424,4);label(detect_enable?36:37,916,424,2);
+     if(in_rect(x,y,600,400,1000,472))background=(RECORDING_BUILD==0&&detect_enable)?24'h087f83:24'h26394d;
+     label(35,620,424,4);label((RECORDING_BUILD==0&&detect_enable)?36:37,916,424,2);
 
     end
     3:begin
@@ -199,9 +207,17 @@ module wb_ui_overlay #(parameter FONT_FILE="../../../user_source/hdl_source/ui/w
     end
     8:begin
      if(in_rect(x,y,584,112,1000,176))background=tag_enable?24'h087f83:24'h26394d;
-     if(in_rect(x,y,584,192,1000,256))background=detect_enable?24'h087f83:24'h26394d;
+     if(in_rect(x,y,584,192,1000,256))background=(RECORDING_BUILD==0&&detect_enable)?24'h087f83:24'h26394d;
      label(61,620,132,6);label(tag_enable?36:37,916,132,2);
-     label(62,620,212,4);label(detect_enable?36:37,916,212,2);
+     label(62,620,212,4);label((RECORDING_BUILD==0&&detect_enable)?36:37,916,212,2);
+     if(RECORDING_BUILD!=0)begin
+      if(in_rect(x,y,584,272,1000,336))
+       background=(record_status==2)?24'h9a303c:
+                  (record_status==1)?24'h087f83:24'h26394d;
+      label(record_status==1?77:record_status==2?78:
+            record_status==3?80:record_status==4?81:
+            record_status==5?83:82,620,292,7);
+     end
 
     end
     9:begin

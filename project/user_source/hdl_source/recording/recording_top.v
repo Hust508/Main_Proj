@@ -1,0 +1,47 @@
+// Separate TD top for the resource-limited TF recording image.
+module recording_top (
+    input wire I_sys_clk,I_rst_n,
+    output wire O_cam_scl,
+    inout wire IO_cam_sda,
+    output wire O_cam_24m,O_cam_rst,
+    inout wire [1:0] I_button,
+    output wire O_screen_pwm,O_screen_reset_n,
+    inout wire IO_touch_scl,IO_touch_sda,IO_touch_int,
+    input wire I_tf_cd_n,I_tf_miso,
+    output wire O_tf_cs_n,O_tf_clk,O_tf_mosi,O_tf_data1,O_tf_data2,
+    inout wire IO_tx_clk_pad_n,IO_tx_clk_pad_p,
+    inout wire [3:0] IO_tx_data_pad_n,IO_tx_data_pad_p,
+    inout wire IO_rx_clk_pad_n,IO_rx_clk_pad_p,
+    inout wire [3:0] IO_rx_data_pad_n,IO_rx_data_pad_p,
+    output wire [12:0] ddr_addr,
+    output wire [1:0] ddr_ba,
+    output wire [0:0] ddr_cke,ddr_odt,ddr_cs_n,
+    output wire ddr_ras_n,ddr_cas_n,ddr_we_n,
+    output wire [0:0] ddr_ck_p,ddr_ck_n,
+    inout wire [1:0] ddr_dm,
+    inout wire [15:0] ddr_dq,
+    inout wire [1:0] ddr_dqs_p,ddr_dqs_n
+);
+    design_top_wrapper #(.RECORDING_BUILD(1)) u_core (
+        .I_sys_clk(I_sys_clk),.I_rst_n(I_rst_n),
+        .O_cam_scl(O_cam_scl),.IO_cam_sda(IO_cam_sda),
+        .O_cam_24m(O_cam_24m),.O_cam_rst(O_cam_rst),
+        .I_button(I_button),.O_screen_pwm(O_screen_pwm),
+        .O_screen_reset_n(O_screen_reset_n),
+        .IO_touch_scl(IO_touch_scl),.IO_touch_sda(IO_touch_sda),
+        .IO_touch_int(IO_touch_int),
+        .I_tf_cd_n(I_tf_cd_n),.I_tf_miso(I_tf_miso),
+        .O_tf_cs_n(O_tf_cs_n),.O_tf_clk(O_tf_clk),.O_tf_mosi(O_tf_mosi),
+        .O_tf_data1(O_tf_data1),.O_tf_data2(O_tf_data2),
+        .IO_tx_clk_pad_n(IO_tx_clk_pad_n),.IO_tx_clk_pad_p(IO_tx_clk_pad_p),
+        .IO_tx_data_pad_n(IO_tx_data_pad_n),.IO_tx_data_pad_p(IO_tx_data_pad_p),
+        .IO_rx_clk_pad_n(IO_rx_clk_pad_n),.IO_rx_clk_pad_p(IO_rx_clk_pad_p),
+        .IO_rx_data_pad_n(IO_rx_data_pad_n),.IO_rx_data_pad_p(IO_rx_data_pad_p),
+        .ddr_addr(ddr_addr),.ddr_ba(ddr_ba),.ddr_cke(ddr_cke),
+        .ddr_odt(ddr_odt),.ddr_cs_n(ddr_cs_n),
+        .ddr_ras_n(ddr_ras_n),.ddr_cas_n(ddr_cas_n),.ddr_we_n(ddr_we_n),
+        .ddr_ck_p(ddr_ck_p),.ddr_ck_n(ddr_ck_n),
+        .ddr_dm(ddr_dm),.ddr_dq(ddr_dq),
+        .ddr_dqs_p(ddr_dqs_p),.ddr_dqs_n(ddr_dqs_n)
+    );
+endmodule

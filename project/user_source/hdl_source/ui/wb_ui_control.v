@@ -1,10 +1,11 @@
-module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
+module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30,
+                       RECORDING_BUILD=0)(
  input wire I_clk,I_rst_n,I_online,I_report,
  input wire [3:0] I_contacts,input wire [9:0] I_x,I_y,
- input wire [1:0] I_buttons_n,
+ input wire [1:0] I_buttons_n,input wire [2:0] I_record_status,
  output reg [3:0] O_page,output reg [1:0] O_mode,O_preset,
  output reg [6:0] O_index,O_gain,output reg O_detect_enable,O_tag_enable,
- output reg [2:0] O_image_mode,
+ output reg [2:0] O_image_mode,output reg O_record_request,
  output reg signed [4:0] O_ab,O_gm,output reg O_key_axis
 );
  // Pages 0..6 keep the Hproject UI. Page 7 selects filters; page 8
@@ -60,7 +61,7 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
  always @(posedge I_clk or negedge I_rst_n)
  if(!I_rst_n)begin
   O_key_axis<=0;O_ab<=0;O_gm<=0;axis_drag<=0;axis_direction<=0;
-  O_detect_enable<=0;O_tag_enable<=0;O_image_mode<=0;
+  O_detect_enable<=0;O_tag_enable<=0;O_image_mode<=0;O_record_request<=0;
   O_page<=0;O_mode<=0;O_preset<=1;O_index<=30;custom_index<=30;
   held<=0;blocked<=0;consumed<=0;drag<=0;direction<=0;
   start_x<=0;start_y<=0;hold_ms<=0;released_ms<=RELEASE_MS;repeat_ms<=0;
@@ -98,10 +99,11 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
         else if(I_y>=192&&I_y<256)O_page<=3;
         else if(I_y>=272&&I_y<336)begin O_page<=4;O_mode<=2;O_index<=custom_index;end
         else if(I_y>=352&&I_y<416)O_page<=5;
-        else if(I_y>=432&&I_y<496)O_page<=(I_x<792)?7:8;
+        else if(I_y>=432&&I_y<496)O_page<=(RECORDING_BUILD!=0)?8:
+                                                (I_x<792)?7:8;
         else if(I_y>=504&&I_y<556)O_page<=9;
        end
-       2:if(I_x>=600&&I_x<1000&&I_y>=400&&I_y<472)O_detect_enable<=!O_detect_enable;
+       2:if(RECORDING_BUILD==0&&I_x>=600&&I_x<1000&&I_y>=400&&I_y<472)O_detect_enable<=!O_detect_enable;
        3:if(I_x>=584&&I_x<1000)begin
         if(I_y>=112&&I_y<176)begin O_mode<=1;O_preset<=0;O_index<=5;end
         else if(I_y>=192&&I_y<256)begin O_mode<=1;O_preset<=1;O_index<=30;end
@@ -152,8 +154,12 @@ module wb_ui_control #(parameter CLK_HZ=25000000,LONG_MS=800,RELEASE_MS=30)(
        8:begin
         if(I_x>=584&&I_x<1000&&I_y>=112&&I_y<176)
          O_tag_enable<=!O_tag_enable;
-        else if(I_x>=584&&I_x<1000&&I_y>=192&&I_y<256)
+        else if(RECORDING_BUILD==0&&I_x>=584&&I_x<1000&&I_y>=192&&I_y<256)
          O_detect_enable<=!O_detect_enable;
+        else if(I_x>=584&&I_x<1000&&I_y>=272&&I_y<336)begin
+         if(I_record_status==3'd1)O_record_request<=1;
+         else if(I_record_status==3'd2)O_record_request<=0;
+        end
        end
       endcase
      end
